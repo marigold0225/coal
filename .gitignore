@@ -1,0 +1,11 @@
+### c++tem template
+### Example user template
+
+# IntelliJ project files
+/build-debug/
+/build-release/
+/3rdparty/
+/output/
+/tests/
+/googletest/
+.idea

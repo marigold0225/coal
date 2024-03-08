@@ -1,0 +1,153 @@
+General:
+  Mode: smash # smash or spec or binary
+  Path: ../input/100
+  Filename: particle_lists.oscar
+  Seed: 123456
+  Parallel:
+    Enable: false
+    Cores: 20
+  Centrality:
+    Enable: false
+    Ranges:
+      - [ 0 , 10 ]
+      - [ 10 , 20 ]
+      - [ 20 , 40 ]
+      - [ 40 , 80 ]
+Output:
+  FileType: dat # oscar or binary
+  Extended: false
+  Path: ../output
+  RapidityRange:
+    - [ -0.5,  0.5 ]
+#    - [ -0.2, -0.1 ]
+#    - [ -0.3, -0.2 ]
+#    - [ -0.4, -0.3 ]
+#    - [ -0.5, -0.4 ]
+#    - [ -0.6, -0.5 ]
+#    - [ -0.7, -0.6 ]
+#    - [ -0.8, -0.7 ]
+#    - [ -0.9, -0.8 ]
+#    - [ -1.0, -0.9 ]
+
+Reactions:
+  Deuteron: false
+  Helium3: false
+  Helium4: true
+  Li5: false
+  Li6: false
+  Be8: false
+
+ClusterParams:
+  Deuteron:
+    NBody: 2
+    Loop: 64
+    MixEvents: 20
+    Precision: 2
+    From: [ 2212, 2112 ]
+    MassArray: [ 0.938, 0.938 ]
+    RapidityCut:
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+    Sig: [ 2.262741 ]
+    gc: 3/4
+    PDG: 222
+    TargetRapidity: [ -0.5,0.5 ]
+    ProbCut: 0.0004444
+    Pt: [ 0.2, 20 ]
+  Helium4:
+    NBody: 4
+    Loop: 1
+    MixEvents: 12
+    Precision: 25 # {1,NBody}
+    From: [ 2212, 2212, 2112, 2112 ]
+    MassArray: [ 0.938, 0.938, 0.938, 0.938 ]
+    RapidityCut:
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+    Sig: [ 1.45, 1.45, 1.45 ]
+    gc: 1/16
+    PDG: 4444
+    TargetRapidity: [ -0.5,0.5 ]
+    ProbCut: 1.234567e-6
+    Pt: [ 0.5, 10 ]
+  Li5:
+    NBody: 5
+    Loop: 100
+    MixEvents: 10
+    Precision: 3
+    From: [ 2212, 2212, 2212, 2112, 2112 ]
+    MassArray: [ 0.938, 0.938, 0.938, 0.938, 0.938 ]
+    RapidityCut:
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+    Sig: [ 2.5, 2.5, 2.5, 2.5 ]
+    gc: 1/8
+    PDG: 555
+    TargetRapidity: [ -0.5, 0.5 ]
+    ProbCut: 1.23e-7
+    Pt: [ 0.6, 10 ]
+  Li6:
+    NBody: 6
+    Loop: 100
+    MixEvents: 18
+    Precision: 3
+    From: [ 2212, 2212, 2212, 2112, 2112, 2112 ]
+    MassArray: [ 0.938, 0.938, 0.938, 0.938, 0.938, 0.938 ]
+    RapidityCut:
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+    Sig: [ 2.5, 2.5, 2.5, 2.5, 2.5 ]
+    gc: 3/64
+    PDG: 666
+    TargetRapidity: [ -0.5, 0.5 ]
+    ProbCut: 1.23e-8
+    Pt: [ 0.8, 10 ]
+  Helium3:
+    NBody: 3
+    Loop: 100
+    MixEvents: 9
+    Precision: 2
+    From: [ 2212, 2212, 2112 ]
+    MassArray: [ 0.938, 0.938, 0.938 ]
+    RapidityCut:
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+    Sig: [ 1.76, 1.76 ]
+    gc: 1/4
+    PDG: 3333
+    TargetRapidity: [ -0.5,0.5 ]
+    ProbCut: 1.0e-5
+    Pt: [ 0.3, 10 ]
+  Be8:
+    NBody: 8
+    Loop: 100
+    MixEvents: 24
+    Precision: 1
+    From: [ 2212, 2212, 2212, 2212, 2112, 2112, 2112, 2112 ]
+    MassArray: [ 0.938, 0.938, 0.938, 0.938, 0.938, 0.938, 0.938, 0.938 ]
+    RapidityCut:
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+      - [ -0.8,0.8 ]
+    Sig: [ 2.667 , 2.667 , 2.667 , 2.667 , 2.667 , 2.667 , 2.667 ]
+    gc: 1/256
+    PDG: 888
+    TargetRapidity: [ -0.5,0.5 ]
+    ProbCut: 1.0e-8
+    Pt: [ 0.8, 10 ]
+
