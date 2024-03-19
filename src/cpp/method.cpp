@@ -2,7 +2,6 @@
 // Created by mafu on 1/8/2024.
 //
 #include "../headers/method.h"
-#include "omp.h"
 #include <algorithm>
 #include <chrono>
 #include <filesystem>
@@ -26,7 +25,14 @@ Coal::ClusterParams::ClusterParams(const YAML::Node &node) {
     }
     pdg            = node["PDG"].as<int>();
     probabilityCut = node["ProbCut"].as<double>();
-    MassArray      = node["MassArray"].as<std::vector<double>>();
+    Fixed          = node["MassArray"]["Fixed"].as<bool>();
+    if (Fixed) {
+        MassArray = node["MassArray"]["Array"].as<std::vector<double>>();
+        setMassArray(MassArray);
+    } else {
+        MassArray = node["MassArray"]["Array"].as<std::vector<double>>();
+    }
+    // MassArray      = node["MassArray"].as<std::vector<double>>();
     SigArray       = node["Sig"].as<std::vector<double>>();
     PDGArray       = node["From"].as<std::vector<int>>();
     ptBins         = node["Pt"].as<std::pair<double, int>>();
@@ -84,8 +90,12 @@ bool Coal::checkFileExits(const std::string &filename,
 std::string Coal::constructFilename(const std::string &filename,
                                     const std::string &fileType,
                                     const std::string &label) {
+    if (label == "all") {
+        return filename + "/" + fileType + ".dat";
+    }
     return filename + "/" + label + "/" + fileType + "_" + label + ".dat";
 }
+
 std::vector<double> Coal::linspace(const double start, const double end,
                                    const int num) {
     std::vector<double> Linspaced;
@@ -231,8 +241,8 @@ Coal::calculateLorentz(const Eigen::VectorXd &betaX,
             lorentzMatrices.emplace_back(Eigen::Matrix4d::Identity());
             continue;
         }
-        if (beta2 > 0.99999) {
-            beta2 = 0.99999;
+        if (beta2 > 0.999999999) {
+            beta2 = 0.999999999;
         }
 
         double gamma = 1.0 / sqrt(1.0 - beta2);
@@ -295,59 +305,59 @@ void Coal::applyLorentzBoost(Eigen::Ref<Eigen::MatrixXd> combinedX,
         }
     }
 }
-void Coal::applyLorentzBoostCols(Eigen::Ref<Eigen::MatrixXd> combinedX,
-                                 Eigen::Ref<Eigen::MatrixXd> combinedY,
-                                 Eigen::Ref<Eigen::MatrixXd> combinedZ,
-                                 Eigen::Ref<Eigen::MatrixXd> combinedT,
-                                 Eigen::Ref<Eigen::MatrixXd> combinedPX,
-                                 Eigen::Ref<Eigen::MatrixXd> combinedPY,
-                                 Eigen::Ref<Eigen::MatrixXd> combinedPZ,
-                                 Eigen::Ref<Eigen::MatrixXd> combinedP0,
-                                 const std::vector<Eigen::Matrix4d> &lorentz) {
 
-    for (int i = 0; i < combinedX.rows(); ++i) {
-        const Eigen::Matrix4d &lorentzMatrix = lorentz[i];
-
-        for (int j = 0; j < combinedX.cols(); ++j) {
-            // 提取矩阵和向量的元素
-            double p0 = combinedP0(i, j);
-            double px = combinedPX(i, j);
-            double py = combinedPY(i, j);
-            double pz = combinedPZ(i, j);
-            double t  = combinedT(i, j);
-            double x  = combinedX(i, j);
-            double y  = combinedY(i, j);
-            double z  = combinedZ(i, j);
-
-            // 展开乘法计算
-            combinedP0(i, j) =
-                    lorentzMatrix(0, 0) * p0 + lorentzMatrix(0, 1) * px +
-                    lorentzMatrix(0, 2) * py + lorentzMatrix(0, 3) * pz;
-            combinedPX(i, j) =
-                    lorentzMatrix(1, 0) * p0 + lorentzMatrix(1, 1) * px +
-                    lorentzMatrix(1, 2) * py + lorentzMatrix(1, 3) * pz;
-            combinedPY(i, j) =
-                    lorentzMatrix(2, 0) * p0 + lorentzMatrix(2, 1) * px +
-                    lorentzMatrix(2, 2) * py + lorentzMatrix(2, 3) * pz;
-            combinedPZ(i, j) =
-                    lorentzMatrix(3, 0) * p0 + lorentzMatrix(3, 1) * px +
-                    lorentzMatrix(3, 2) * py + lorentzMatrix(3, 3) * pz;
-
-            combinedT(i, j) = lorentzMatrix(0, 0) * t +
-                              lorentzMatrix(0, 1) * x +
-                              lorentzMatrix(0, 2) * y + lorentzMatrix(0, 3) * z;
-            combinedX(i, j) = lorentzMatrix(1, 0) * t +
-                              lorentzMatrix(1, 1) * x +
-                              lorentzMatrix(1, 2) * y + lorentzMatrix(1, 3) * z;
-            combinedY(i, j) = lorentzMatrix(2, 0) * t +
-                              lorentzMatrix(2, 1) * x +
-                              lorentzMatrix(2, 2) * y + lorentzMatrix(2, 3) * z;
-            combinedZ(i, j) = lorentzMatrix(3, 0) * t +
-                              lorentzMatrix(3, 1) * x +
-                              lorentzMatrix(3, 2) * y + lorentzMatrix(3, 3) * z;
-        }
-    }
-}
+// std::tuple<std::vector<double>, std::vector<double>>
+// Coal::JacobiCoordinatesMatrix(const Eigen::MatrixXd &particles,
+//                               const ClusterParams &params) {
+//     const auto N = particles.rows();
+//     Eigen::MatrixXd M, M_inv_t;
+//     if (!params.Fixed) {
+//         std::vector<double> massArray(N);
+//         for (int i = 0; i < N; ++i) {
+//             massArray[i] = particles(i, 4);
+//         }
+//         M       = MassMatrix(massArray);
+//         M_inv_t = M.inverse().transpose();
+//     } else {
+//         if (N - 2 < params.M.size()) {
+//             M       = params.M[N - 2];
+//             M_inv_t = params.M_inv_t[N - 2];
+//         } else {
+//             throw std::runtime_error(
+//                     "Particle count exceeds precomputed matrix size.");
+//         }
+//     }
+//     Eigen::VectorXd x(N), y(N), z(N), px(N), py(N), pz(N);
+//
+//     x  = particles.col(6);
+//     y  = particles.col(7);
+//     z  = particles.col(8);
+//     px = particles.col(1);
+//     py = particles.col(2);
+//     pz = particles.col(3);
+//
+//     auto transformCoordinates = [&](const Eigen::VectorXd &vec,
+//                                     const Eigen::MatrixXd &mat) {
+//         return (mat * vec).tail(vec.size() - 1);
+//     };
+//
+//     Eigen::VectorXd x_jacobi  = transformCoordinates(x, M);
+//     Eigen::VectorXd y_jacobi  = transformCoordinates(y, M);
+//     Eigen::VectorXd z_jacobi  = transformCoordinates(z, M);
+//     Eigen::VectorXd px_jacobi = transformCoordinates(px, M_inv_t);
+//     Eigen::VectorXd py_jacobi = transformCoordinates(py, M_inv_t);
+//     Eigen::VectorXd pz_jacobi = transformCoordinates(pz, M_inv_t);
+//
+//     std::vector<double> d_r(N - 1), d_p(N - 1);
+//     for (auto i = 0; i < N - 1; ++i) {
+//         d_r[i] = sqrt(x_jacobi(i) * x_jacobi(i) + y_jacobi(i) * y_jacobi(i) +
+//                       z_jacobi(i) * z_jacobi(i));
+//         d_p[i] =
+//                 sqrt(px_jacobi(i) * px_jacobi(i) + py_jacobi(i) * py_jacobi(i) +
+//                      pz_jacobi(i) * pz_jacobi(i));
+//     }
+//     return std::make_tuple(d_r, d_p);
+// }
 
 
 std::tuple<std::vector<double>, std::vector<double>>
@@ -362,45 +372,6 @@ Coal::JacobiCoordinatesMatrix(const Eigen::MatrixXd &particles,
     px = particles.col(1);
     py = particles.col(2);
     pz = particles.col(3);
-
-    auto transformCoordinates = [&](const Eigen::VectorXd &vec,
-                                    const Eigen::MatrixXd &mat) {
-        return (mat * vec).tail(vec.size() - 1);
-    };
-
-    Eigen::VectorXd x_jacobi  = transformCoordinates(x, params.M[N - 2]);
-    Eigen::VectorXd y_jacobi  = transformCoordinates(y, params.M[N - 2]);
-    Eigen::VectorXd z_jacobi  = transformCoordinates(z, params.M[N - 2]);
-    Eigen::VectorXd px_jacobi = transformCoordinates(px, params.M_inv_t[N - 2]);
-    Eigen::VectorXd py_jacobi = transformCoordinates(py, params.M_inv_t[N - 2]);
-    Eigen::VectorXd pz_jacobi = transformCoordinates(pz, params.M_inv_t[N - 2]);
-
-    std::vector<double> d_r(N - 1), d_p(N - 1);
-    for (auto i = 0; i < N - 1; ++i) {
-        d_r[i] = sqrt(x_jacobi(i) * x_jacobi(i) + y_jacobi(i) * y_jacobi(i) +
-                      z_jacobi(i) * z_jacobi(i));
-        d_p[i] =
-                sqrt(px_jacobi(i) * px_jacobi(i) + py_jacobi(i) * py_jacobi(i) +
-                     pz_jacobi(i) * pz_jacobi(i));
-    }
-    return std::make_tuple(d_r, d_p);
-}
-
-std::tuple<std::vector<double>, std::vector<double>>
-Coal::JacobiCoordinates(const ParticleArray &particles,
-                        const ClusterParams &params) {
-    const auto N = static_cast<int>(particles.size());
-
-    Eigen::VectorXd x(N), y(N), z(N), px(N), py(N), pz(N);
-
-    for (auto i = 0; i < N; ++i) {
-        x(i)  = particles[i].x;
-        y(i)  = particles[i].y;
-        z(i)  = particles[i].z;
-        px(i) = particles[i].px;
-        py(i) = particles[i].py;
-        pz(i) = particles[i].pz;
-    }
 
     auto transformCoordinates = [&](const Eigen::VectorXd &vec,
                                     const Eigen::MatrixXd &mat) {
@@ -544,8 +515,8 @@ Coal::selectParticlesMatrix(const EventsMap &eventMap,
             ++count;
         }
         std::ranges::shuffle(particlesForThisPDG, generator);
-        matrix.resize(particlesForThisPDG.size(), 11);
-        for (size_t j = 0; j < particlesForThisPDG.size(); ++j) {
+        matrix.resize(static_cast<long>(particlesForThisPDG.size()), 11);
+        for (long j = 0; j < particlesForThisPDG.size(); ++j) {
             matrix(j, 0)  = particlesForThisPDG[j].pdg;
             matrix(j, 1)  = particlesForThisPDG[j].px;
             matrix(j, 2)  = particlesForThisPDG[j].py;
@@ -564,75 +535,3 @@ Coal::selectParticlesMatrix(const EventsMap &eventMap,
     }
     return result;
 }
-std::tuple<double, double, double, double, double, double>
-Coal::fourBodyJacobi(const Coal::Particle &p1, const Coal::Particle &p2,
-                     const Coal::Particle &n1, const Coal::Particle &n2) {
-    double dx_p1p2  = (p1.x - p2.x) / sqrt(2.0);
-    double dy_p1p2  = (p1.y - p2.y) / sqrt(2.0);
-    double dz_p1p2  = (p1.z - p2.z) / sqrt(2.0);
-    double dpx_p1p2 = (p2.mass * p1.px - p1.mass * p2.px) /
-                      (p1.mass + p2.mass) * sqrt(2.0);
-    double dpy_p1p2 = (p2.mass * p1.py - p1.mass * p2.py) /
-                      (p1.mass + p2.mass) * sqrt(2.0);
-    double dpz_p1p2 = (p2.mass * p1.pz - p1.mass * p2.pz) /
-                      (p1.mass + p2.mass) * sqrt(2.0);
-    double diff_dr_p1p2 =
-            sqrt(dx_p1p2 * dx_p1p2 + dy_p1p2 * dy_p1p2 + dz_p1p2 * dz_p1p2);
-    double diff_dp_p1p2 = sqrt(dpx_p1p2 * dpx_p1p2 + dpy_p1p2 * dpy_p1p2 +
-                               dpz_p1p2 * dpz_p1p2);
-
-    double dx_p1p2n1 =
-            (p1.mass * p1.x + p2.mass * p2.x - (p1.mass + p2.mass) * n1.x) /
-            (p1.mass + p2.mass) * sqrt(2.0 / 3.0);
-    double dy_p1p2n1 =
-            (p1.mass * p1.y + p2.mass * p2.y - (p1.mass + p2.mass) * n1.y) /
-            (p1.mass + p2.mass) * sqrt(2.0 / 3.0);
-    double dz_p1p2n1 =
-            (p1.mass * p1.z + p2.mass * p2.z - (p1.mass + p2.mass) * n1.z) /
-            (p1.mass + p2.mass) * sqrt(2.0 / 3.0);
-    double dpx_p1p2n1 =
-            (n1.mass * p1.px + n1.mass * p2.px - (p1.mass + p2.mass) * n1.px) /
-            (p1.mass + p2.mass + n1.mass) * sqrt(6) / 2;
-    double dpy_p1p2n1 =
-            (n1.mass * p1.py + n1.mass * p2.py - (p1.mass + p2.mass) * n1.py) /
-            (p1.mass + p2.mass + n1.mass) * sqrt(6) / 2;
-    double dpz_p1p2n1 =
-            (n1.mass * p1.pz + n1.mass * p2.pz - (p1.mass + p2.mass) * n1.pz) /
-            (p1.mass + p2.mass + n1.mass) * sqrt(6) / 2;
-    double diff_dr_p1p2n1 = sqrt(dx_p1p2n1 * dx_p1p2n1 + dy_p1p2n1 * dy_p1p2n1 +
-                                 dz_p1p2n1 * dz_p1p2n1);
-    double diff_dp_p1p2n1 =
-            sqrt(dpx_p1p2n1 * dpx_p1p2n1 + dpy_p1p2n1 * dpy_p1p2n1 +
-                 dpz_p1p2n1 * dpz_p1p2n1);
-
-    double dx_p1p2n1n2 = (p1.mass * p1.x + p2.mass * p2.x + n1.mass * n1.x -
-                          (p1.mass + p2.mass + n1.mass) * n2.x) /
-                         (p1.mass + p2.mass + n1.mass) * sqrt(3.0 / 4.0);
-    double dy_p1p2n1n2 = (p1.mass * p1.y + p2.mass * p2.y + n1.mass * n1.y -
-                          (p1.mass + p2.mass + n1.mass) * n2.y) /
-                         (p1.mass + p2.mass + n1.mass) * sqrt(3.0 / 4.0);
-    double dz_p1p2n1n2 = (p1.mass * p1.z + p2.mass * p2.z + n1.mass * n1.z -
-                          (p1.mass + p2.mass + n1.mass) * n2.z) /
-                         (p1.mass + p2.mass + n1.mass) * sqrt(3.0 / 4.0);
-    double dpx_p1p2n1n2 = (n2.mass * (p1.px + p2.px + n1.px) -
-                           (p1.mass + p2.mass + n1.mass) * n2.px) /
-                          (p1.mass + p2.mass + n1.mass + n2.mass) *
-                          sqrt(4.0 / 3.0);
-    double dpy_p1p2n1n2 = (n2.mass * (p1.py + p2.py + n1.py) -
-                           (p1.mass + p2.mass + n1.mass) * n2.py) /
-                          (p1.mass + p2.mass + n1.mass + n2.mass) *
-                          sqrt(4.0 / 3.0);
-    double dpz_p1p2n1n2 = (n2.mass * (p1.pz + p2.pz + n1.pz) -
-                           (p1.mass + p2.mass + n1.mass) * n2.pz) /
-                          (p1.mass + p2.mass + n1.mass + n2.mass) *
-                          sqrt(4.0 / 3.0);
-    double diff_dr_p1p2n1n2 =
-            sqrt(dx_p1p2n1n2 * dx_p1p2n1n2 + dy_p1p2n1n2 * dy_p1p2n1n2 +
-                 dz_p1p2n1n2 * dz_p1p2n1n2);
-    double diff_dp_p1p2n1n2 =
-            sqrt(dpx_p1p2n1n2 * dpx_p1p2n1n2 + dpy_p1p2n1n2 * dpy_p1p2n1n2 +
-                 dpz_p1p2n1n2 * dpz_p1p2n1n2);
-    return std::make_tuple(diff_dr_p1p2, diff_dr_p1p2n1, diff_dr_p1p2n1n2,
-                           diff_dp_p1p2, diff_dp_p1p2n1, diff_dp_p1p2n1n2);
-}
-

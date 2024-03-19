@@ -4,7 +4,6 @@
 #pragma once
 #include "method.h"
 
-inline std::mutex mtx;
 namespace Coal {
 
     struct ComputationMatrices {
@@ -32,7 +31,7 @@ namespace Coal {
         Eigen::Map<Eigen::VectorXd> diff;
 
         // Constructor
-        ComputationMatrices(double *memPool, int size_last, int N);
+        ComputationMatrices(double *memPool, long size_last, int N);
         void reset();
     };
 
@@ -42,22 +41,6 @@ namespace Coal {
                        const std::string &ptFilename,
                        const ClusterParams &params, const YAML::Node &output);
 
-    void clusterNoThread(const EventsMap &allEvents,
-                         const std::string &outputFilename,
-                         const std::string &ptFilename,
-                         const ClusterParams &params,
-                         const RapidityArray &rapidityArray);
-
-    void clusterMix(const EventsMap &allEvents,
-                    const std::string &outputFilename,
-                    const std::string &ptFilename, const ClusterParams &params,
-                    const RapidityArray &rapidityArray);
-
-    void clusterThreadMatrix(const EventsMap &allEvents,
-                             const std::string &outputFilename,
-                             const std::string &ptFilename,
-                             const ClusterParams &params,
-                             const YAML::Node &output);
     void resetGlobalState();
 
     void clusterThreadV2(const EventsMap &allEvents,
@@ -68,9 +51,6 @@ namespace Coal {
     void createThreadPool(unsigned int num_threads, const ClusterParams &params,
                           Eigen::MatrixXd &targetParticles);
 
-    void processSubCell(const MultiParticleArray &subCell,
-                        const ClusterParams &params,
-                        ParticleArray &targetParticles);
     void processSubCellMatrix(const std::vector<Eigen::MatrixXd> &subCell,
                               const ClusterParams &params,
                               Eigen::MatrixXd &targetParticles);
@@ -78,16 +58,12 @@ namespace Coal {
     void outputTargetParticleMatrix(
             const Eigen::MatrixXd &targetParticles,
             std::ofstream &outputCluster,
-            std::map<std::pair<double, double>, std::vector<double>> &ptArray,
-            std::map<std::pair<double, double>, double> &yeildArray,
+            std::map<RapidityRange, std::vector<double>> &ptArray,
+            std::map<RapidityRange, double> &yeildArray,
             const ClusterParams &params, const RapidityArray &rapidityArray,
-            const bool &extended);
-
-    void outputTargetParticle(
-            const ParticleArray &targetParticles, std::ofstream &outputCluster,
-            std::map<std::pair<double, double>, std::vector<double>> &ptArray,
-            std::map<std::pair<double, double>, double> &yeildArray,
-            const ClusterParams &params, const RapidityArray &rapidityArray);
+            const bool &extended,
+            std::map<RapidityRange, std::vector<double>> &v2Array,
+            std::map<RapidityRange, std::vector<double>> &countArray);
 
     void outputTargetParticleBinary(
             const ParticleArray &targetParticles, std::ofstream &outputCluster,
@@ -103,32 +79,15 @@ namespace Coal {
     bool incrementIndex(std::vector<int> &multiIndex,
                         const std::vector<int> &counts);
 
-    ParticleArray mainLoopV2(const MultiParticleArray &ReactionParticles,
-                             const ClusterParams &params);
 
     Eigen::MatrixXd mainLoopMatrix(const std::vector<Eigen::MatrixXd> &MArray,
                                    const ClusterParams &params);
 
-    ParticleArray mainLoop(const MultiParticleArray &ReactionParticles,
-                           const ClusterParams &params);
 
     //jump vaild loop
     std::vector<int> jumpValidLoop(const std::vector<int> &multiIndex,
                                    const std::vector<int> &counts,
                                    int jumpIndex);
-
-    void nBodyCoal(const ParticleArray &Particles, Particle &targetParticle,
-                   const ClusterParams &params, const std::vector<int> &counts,
-                   const std::vector<int> &multIndex,
-                   std::vector<int> &jumpMultiIndex,
-                   std::vector<int> &lastMultiIndex);
-
-    void nBodyCoalV2(const ParticleArray &Particles, Particle &targetParticle,
-                     const ClusterParams &params,
-                     const std::vector<int> &counts,
-                     const std::vector<int> &multIndex,
-                     std::vector<int> &jumpMultiIndex,
-                     std::unordered_map<std::string, double> &distanceCache);
 
     std::string createKeyFromMultiIndex(const std::vector<int> &multiIndex,
                                         int index);
@@ -138,10 +97,6 @@ namespace Coal {
             const std::vector<int> &counts, const std::vector<int> &multIndex,
             std::vector<int> &jumpMultiIndex,
             std::unordered_map<std::string, double> &distanceCache);
-    void batchProcessLastParticles(
-            const Eigen::MatrixXd &Particles,
-            const Eigen::MatrixXd &LastParticles, const ClusterParams &params,
-            Eigen::Matrix<double, Eigen::Dynamic, 11> &targetParticles);
 
     void batchProcessLastParticlesCols(
             const Eigen::MatrixXd &Particles,

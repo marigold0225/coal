@@ -33,11 +33,95 @@ void Coal::PreData::readSmashLine(const std::string &line,
         std::cerr << "Failed to parse line: " << line << std::endl;
     }
 }
+void Coal::PreData::LoadPDGcode(std::unordered_map<int, int> &pdgChargeMap,
+                                const std::string &filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("Error: cannot open file " + filename);
+    }
+
+    int pdg, charge, spin;
+    while (file >> pdg >> charge >> spin) {
+        // std::cout << "pdg: " << pdg << " charge: " << charge << std::endl;
+        pdgChargeMap[pdg] = charge;
+    }
+
+    file.close();
+}
+void Coal::PreData::setParticleCharge(
+        Particle &particle, const std::unordered_map<int, int> &pdgChargeMap) {
+    if (const auto it = pdgChargeMap.find(particle.pdg);
+        it != pdgChargeMap.end()) {
+        particle.charge = it->second;
+    } else {
+        std::cerr << "PDG code " << particle.pdg << " not found in map."
+                  << std::endl;
+    }
+}
+
+void Coal::PreData::readAmptLine(
+        const std::string &line, ParticleTypeMap &event,
+        const std::unordered_map<int, int> &pdgChargeMap) {
+    std::istringstream stream(line);
+    Particle particle{};
+
+    stream >> particle.pdg >> particle.px >> particle.py >> particle.pz >>
+            particle.mass >> particle.x >> particle.y >> particle.z >>
+            particle.freeze_out_time;
+    if (!stream.fail()) {
+        particle.probability = 1.0;
+        particle.t           = particle.freeze_out_time;
+        particle.p0          = std::sqrt(
+                particle.px * particle.px + particle.py * particle.py +
+                particle.pz * particle.pz + particle.mass * particle.mass);
+        setParticleCharge(particle, pdgChargeMap);
+        event[particle.pdg].push_back(particle);
+    } else {
+        std::cerr << "Failed to parse line: " << line << std::endl;
+    }
+}
+void Coal::PreData::readFileAmpt(const std::string &filename,
+                                 EventsMap &allEvents) {
+    std::ifstream file(filename);
+    std::string line;
+    std::unordered_map<int, int> pdgChargeMap;
+    LoadPDGcode(pdgChargeMap, "input/AuAuPID.txt");
+    ParticleTypeMap currentEvent{};
+    int currentEventID      = 0;
+    int particleInEvent     = 0;
+    int currentPaticleCount = 0;
+    int other               = 0;
+
+    while (std::getline(file, line)) {
+        if (currentPaticleCount == 0) {
+            std::istringstream eventHeader(line);
+            eventHeader >> currentEventID >> other >> particleInEvent;
+            currentEvent.clear();
+        } else {
+            readAmptLine(line, currentEvent, pdgChargeMap);
+        }
+
+        if (++currentPaticleCount > particleInEvent) {
+            if (!currentEvent.empty()) {
+                allEvents[currentEventID] = currentEvent;
+            }
+            currentPaticleCount = 0;
+        }
+    }
+    if (!currentEvent.empty()) {
+        allEvents[currentEventID] = currentEvent;
+    }
+}
 
 
 void Coal::PreData::readFileSmash(const std::string &filename,
                                   EventsMap &allEvents) {
     std::ifstream file(filename);
+
+    if (!file) {
+        throw std::runtime_error("Error: cannot open file " + filename);
+    }
+
     std::string line;
     ParticleTypeMap currentEvent{};
     int currentEventID = 0;
@@ -75,14 +159,14 @@ void Coal::PreData::readFileSmash(const std::string &filename,
     }
 }
 
-void Coal::PreData::readLineSpec(const std::string &line,
-                                 ParticleTypeMap &events) {
+void Coal::PreData::readLineCluster(const std::string &line,
+                                    ParticleTypeMap &events) {
     std::istringstream stream(line);
     Particle particle{};
 
     stream >> particle.pdg >> particle.px >> particle.py >> particle.pz >>
-            particle.mass >> particle.x >> particle.y >> particle.z >>
-            particle.freeze_out_time >> particle.p0 >> particle.probability;
+            particle.p0 >> particle.mass >> particle.x >> particle.y >>
+            particle.z >> particle.freeze_out_time >> particle.probability;
 
     if (!stream.fail()) {
         particle.t = particle.freeze_out_time;
@@ -91,12 +175,11 @@ void Coal::PreData::readLineSpec(const std::string &line,
         std::cerr << "Failed to parse line: " << line << std::endl;
     }
 }
-void Coal::PreData::readFileSpec(const std::string &filename,
-                                 EventsMap &allEvents) {
+void Coal::PreData::readFileCluster(const std::string &filename,
+                                    EventsMap &allEvents) {
     std::ifstream file(filename);
     if (!file) {
-        std::cerr << "Error: cannot open file " << filename << std::endl;
-        exit(1);
+        throw std::runtime_error("Error: cannot open file " + filename);
     }
 
     std::string firstLine;
@@ -115,7 +198,7 @@ void Coal::PreData::readFileSpec(const std::string &filename,
         if (line.empty() || line[0] == '#') {
             continue;
         }
-        readLineSpec(line, currentEvent);
+        readLineCluster(line, currentEvent);
         lineCount++;
 
         if (lineCount >= average_particles + (eventID < remainder ? 1 : 0)) {
@@ -177,7 +260,7 @@ int Coal::PreData::countChargeParticles(const ParticleEventMap &OneEvent) {
     int chargeParticleCount = 0;
     for (const auto &particle: OneEvent | std::views::values) {
         for (const auto &p: particle) {
-            if (p.charge != 0 && std::abs(p.getArtifactRapidity()) < 0.5 &&
+            if (p.charge != 0 && std::abs(p.getRapidity()) < 1.0 &&
                 std::abs(p.pdg) > 100) {
                 chargeParticleCount++;
             }
@@ -282,12 +365,14 @@ Coal::PreData::classifyAndCountEvents(const EventsMap &allEvents,
 Coal::EventsMap Coal::PreData::readFile(const std::string &filename,
                                         const std::string &mode) {
     EventsMap allEvents{};
-    if (mode == "spec") {
-        readFileSpec(filename, allEvents);
+    if (mode == "cluster") {
+        readFileCluster(filename, allEvents);
     } else if (mode == "binary") {
         readFileBinary(filename, allEvents);
     } else if (mode == "smash") {
         readFileSmash(filename, allEvents);
+    } else if (mode == "ampt") {
+        readFileAmpt(filename, allEvents);
     } else {
         std::cerr << "Error: unknown mode " << mode << std::endl;
         exit(1);
@@ -311,8 +396,8 @@ void Coal::PreData::getPtArray(const EventsMap &allEvents, int pdg,
     const int total_events = static_cast<int>(allEvents.size());
     std::cout << "total_events: " << total_events << std::endl;
     std::ofstream output(outputFilename);
-    std::map<std::pair<double, double>, std::vector<double>> ptArray;
-    std::map<std::pair<double, double>, double> yeildArray;
+    std::map<RapidityRange, std::vector<double>> ptArray;
+    std::map<RapidityRange, double> yeildArray;
     for (const auto &rap: rapidityArray) {
         ptArray[rap]    = std::vector(ptBins.second, 0.0);
         yeildArray[rap] = 0.0;
@@ -320,12 +405,12 @@ void Coal::PreData::getPtArray(const EventsMap &allEvents, int pdg,
 
     for (const auto &particle: particles[pdg]) {
         for (const auto &rap: rapidityArray) {
-            double rapidity = particle.getRapidity();
-            if (rap.first <= rapidity && rapidity < rap.second) {
+            if (double rapidity = particle.getRapidity();
+                rap.first < rapidity && rapidity <= rap.second) {
                 const double pt = std::sqrt(particle.px * particle.px +
                                             particle.py * particle.py);
                 if (const int index = static_cast<int>(pt / ptBins.first);
-                    index < ptBins.second) {
+                    index < ptBins.second && index >= 0) {
                     ptArray[rap][index] += 1.0 / total_events;
                 }
                 yeildArray[rap] += 1.0 / total_events;
@@ -334,7 +419,8 @@ void Coal::PreData::getPtArray(const EventsMap &allEvents, int pdg,
     }
     for (const auto &rap: rapidityArray) {
         output << "Rapidity range: " << rap.first << "<y<" << rap.second
-               << ", cluster yeild:" << yeildArray[rap] << "\n";
+               << ", cluster yield:"
+               << yeildArray[rap] / (rap.second - rap.first) << "\n";
         for (auto i = 0; i < ptBins.second; ++i) {
             const double pt =
                     ptBins.first / 2 + static_cast<double>(i) * ptBins.first;

@@ -51,9 +51,23 @@ namespace Coal {
         static void readSmashLine(const std::string &line,
                                   ParticleTypeMap &event);
 
-        static void readLineSpec(const std::string &line,
+        static void LoadPDGcode(std::unordered_map<int, int> &pdgChargeMap,
+                                const std::string &filename);
+
+        static void
+        setParticleCharge(Particle &particle,
+                          const std::unordered_map<int, int> &pdgChargeMap);
+
+        static void
+        readAmptLine(const std::string &line, ParticleTypeMap &event,
+                     const std::unordered_map<int, int> &pdgChargeMap);
+
+        static void readFileAmpt(const std::string &filename,
+                                 EventsMap &allEvents);
+
+        static void readLineCluster(const std::string &line,
                                  ParticleTypeMap &events);
-        static void readFileSpec(const std::string &filename,
+        static void readFileCluster(const std::string &filename,
                                  EventsMap &allEvents);
 
         static void readFileBinary(const std::string &filename,

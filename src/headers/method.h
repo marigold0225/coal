@@ -19,6 +19,7 @@ namespace Coal {
         int precision;
         double gc;
         int pdg;
+        bool Fixed;
         std::vector<double> MassArray;
         std::vector<double> SigArray;
         std::vector<int> PDGArray;
@@ -80,28 +81,8 @@ namespace Coal {
                            Eigen::Ref<Eigen::MatrixXd> combinedP0,
                            const std::vector<Eigen::Matrix4d> &lorentz);
 
-
-    void applyLorentzBoostCols(Eigen::Ref<Eigen::MatrixXd> combinedX,
-                               Eigen::Ref<Eigen::MatrixXd> combinedY,
-                               Eigen::Ref<Eigen::MatrixXd> combinedZ,
-                               Eigen::Ref<Eigen::MatrixXd> combinedT,
-                               Eigen::Ref<Eigen::MatrixXd> combinedPX,
-                               Eigen::Ref<Eigen::MatrixXd> combinedPY,
-                               Eigen::Ref<Eigen::MatrixXd> combinedPZ,
-                               Eigen::Ref<Eigen::MatrixXd> combinedP0,
-                               const std::vector<Eigen::Matrix4d> &lorentz);
-
-
     std::tuple<std::vector<double>, std::vector<double>>
     JacobiCoordinatesMatrix(const Eigen::MatrixXd &particles,
                             const ClusterParams &params);
 
-    std::tuple<std::vector<double>, std::vector<double>>
-    JacobiCoordinates(const ParticleArray &particles,
-                      const ClusterParams &params);
-
-
-    std::tuple<double, double, double, double, double, double>
-    fourBodyJacobi(const Coal::Particle &p1, const Coal::Particle &p2,
-                   const Coal::Particle &n1, const Coal::Particle &n2);
 }// namespace Coal

@@ -5,6 +5,121 @@
 #include <iostream>
 #include <ranges>
 
+Coal::ConfigData Coal::readCondig(const std::string &fileName) {
+    YAML::Node config = YAML::LoadFile(fileName);
+    ConfigData data;
+    data.input         = config;
+    data.general       = config["General"];
+    data.inputFileName = config["General"]["Path"].as<std::string>() + "/" +
+                         config["General"]["Filename"].as<std::string>();
+    data.output        = config["Output"];
+    data.seed          = config["General"]["Seed"].as<int>();
+    data.outputPath    = config["Output"]["Path"].as<std::string>();
+    data.clusterParams = config["ClusterParams"];
+
+    for (const auto &reaction: config["Reactions"]) {
+        data.reactionSwitch[reaction.first.as<std::string>()] =
+                reaction.second.as<bool>();
+    }
+    return data;
+}
+void Coal::processReaction(
+        const std::string &reactionName, const EventsMap &allEvents,
+        const YAML::Node &clusterParamsNode, const ConfigData &data,
+        const std::optional<std::pair<int, int>> &centrality = std::nullopt) {
+    const auto cluster = ClusterParams(clusterParamsNode[reactionName]);
+    const std::string centralitySuffix =
+            centrality ? std::to_string(centrality->first) + "-" +
+                                 std::to_string(centrality->second)
+                       : "all";
+
+    const auto outputFilename =
+            constructFilename(data.outputPath, reactionName, centralitySuffix);
+    const auto ptFilename = constructFilename(
+            data.outputPath, reactionName + "_pt", centralitySuffix);
+
+    if (data.general["Parallel"]["Enable"].as<bool>()) {
+        clusterThreadV2(allEvents, outputFilename, ptFilename, cluster,
+                        data.input);
+    } else {
+        clusterMatrix(allEvents, outputFilename, ptFilename, cluster,
+                      data.output);
+    }
+}
+// void Coal::handleReactions(const EventsMap &allEvents, const ConfigData &data) {
+//
+//     RandomNumber::getInstance().seed(data.general["Seed"].as<int>());
+//
+//     if (!data.general["Centrality"]["Enable"].as<bool>()) {
+//         for (const auto &[reaction, enabled]: data.reactionSwitch) {
+//             if (enabled) {
+//                 std::cout << "Calculating " << reaction << "...\n";
+//                 processReaction(reaction, allEvents, data.clusterParams, data);
+//             }
+//         }
+//         return;
+//     }
+//     std::cout << "Centrality calculations being performed..." << std::endl;
+//
+//     for (const auto CentralityMap =
+//                  PreData::getCentralityMap(allEvents, data.input);
+//          const auto &[centrality, events]: CentralityMap) {
+//         std::cout << "Processing for centrality " << centrality.first << "-"
+//                   << centrality.second << std::endl;
+//
+//         for (const auto &[reaction, enabled]: data.reactionSwitch) {
+//             if (enabled) {
+//                 std::cout << "Calculating " << reaction << " for centrality "
+//                           << centrality.first << "-" << centrality.second
+//                           << "...\n";
+//                 processReaction(reaction, events, data.clusterParams, data,
+//                                 centrality);
+//             }
+//         }
+//     }
+// }
+
+void Coal::handleReactions(const EventsMap &allEvents, const ConfigData &data) {
+
+    RandomNumber::getInstance().seed(data.general["Seed"].as<int>());
+
+    std::optional<CentralityMap> CentralityMapOpt;
+
+    if (data.general["Centrality"]["Enable"].as<bool>()) {
+        std::cout << "Centrality calculations being performed..." << std::endl;
+        CentralityMapOpt = PreData::getCentralityMap(allEvents, data.input);
+
+        for (const auto &[centrality, events]: *CentralityMapOpt) {
+            std::string outputFilename = constructFilename(
+                    data.outputPath, "proton_pt",
+                    std::to_string(centrality.first) + "-" +
+                            std::to_string(centrality.second));
+            std::cout << "Calculating proton transverse for centrality "
+                      << centrality.first << "-" << centrality.second
+                      << "...\n";
+            PreData::getPtArray(
+                    events, 2212, outputFilename,
+                    data.output["RapidityRange"].as<RapidityArray>(),
+                    {0.2, 10});
+        }
+    }
+
+    for (const auto &[reaction, enabled]: data.reactionSwitch) {
+        if (!enabled)
+            continue;
+        std::cout << "Calculating " << reaction << "...\n";
+        if (CentralityMapOpt) {
+            for (const auto &[centrality, events]: *CentralityMapOpt) {
+                std::cout << "Processing for centrality " << centrality.first
+                          << "-" << centrality.second << std::endl;
+                processReaction(reaction, events, data.clusterParams, data,
+                                centrality);
+            }
+        } else {
+            processReaction(reaction, allEvents, data.clusterParams, data);
+        }
+    }
+}
 
 void Coal::handleCentralityCalculation(const std::string &configFileName) {
     std::cout << "Reading input file..." << std::endl;
@@ -191,6 +306,7 @@ void Coal::handleNoCentralityCalculation(const std::string &configFileName) {
         }
     }
 }
+
 void Coal::prapareEachReaction(const YAML::Node &config,
                                const CentralityMap &centralityMap,
                                const std::string &reactionName) {
@@ -219,7 +335,6 @@ void Coal::prapareEachReaction(const YAML::Node &config,
     }
 }
 void Coal::prapareSpecReaction(const YAML::Node &config,
-                               const RapidityArray &rapidityRange,
                                const CentralityMap &centralityMap,
                                const std::string &fromfileName,
                                const std::string &reactionName) {
@@ -229,20 +344,27 @@ void Coal::prapareSpecReaction(const YAML::Node &config,
                 config["General"]["Path"].as<std::string>(), fromfileName,
                 std::to_string(centrality.first) + "-" +
                         std::to_string(centrality.second));
-        newcentralityMap[centrality] = PreData::readFile(readFilename, "spec");
+        newcentralityMap[centrality] =
+                PreData::readFile(readFilename, "cluster");
     }
     for (const auto &centrality: newcentralityMap | std::views::keys) {
         const auto &events         = newcentralityMap.at(centrality);
         std::string outputFilename = constructFilename(
-                config["General"]["Path"].as<std::string>(), reactionName,
+                config["OutPut"]["Path"].as<std::string>(), reactionName,
                 std::to_string(centrality.first) + "-" +
                         std::to_string(centrality.second));
         std::string ptFilename =
-                constructFilename(config["General"]["Path"].as<std::string>(),
+                constructFilename(config["OutPut"]["Path"].as<std::string>(),
                                   reactionName + "_pt",
                                   std::to_string(centrality.first) + "-" +
                                           std::to_string(centrality.second));
         ClusterParams cluster(config["ClusterParams"][reactionName]);
-        clusterMix(events, outputFilename, ptFilename, cluster, rapidityRange);
+        if (config["General"]["Parallel"]["Enable"].as<bool>()) {
+            clusterThreadV2(events, outputFilename, ptFilename, cluster,
+                            config);
+        } else {
+            clusterMatrix(events, outputFilename, ptFilename, cluster,
+                          config["Output"]);
+        }
     }
 }
