@@ -3,6 +3,8 @@
 //
 #pragma once
 #include <vector>
+#define M_PI 3.14159265358979323846
+
 namespace Coal {
     struct Particle {
         double t, x, y, z;

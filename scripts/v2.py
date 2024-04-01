@@ -3,11 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # 设置基础路径和文件名
-base_path = os.path.join('..', 'output', 'norandom')
+base_path = os.path.join('..', 'output', 'data')
 folder_name = '10-40'
 n_folders = 100
-filename = 'proton_flow_3sub_plus.dat'
-title = 'v2_plus.jpg'
+filename = 'proton_flow_10-40.dat'
+title = 'v2_plus_10-40.jpg'
 experimental_data_path = 'v2_proton.dat'
 
 # 读取并解析实验数据文件
@@ -30,7 +30,7 @@ with open(experimental_data_path, 'r') as file:
 data_by_rapidity = {}
 
 for i in range(n_folders):
-    folder_path = os.path.join(base_path, str(i))
+    folder_path = os.path.join(base_path, str(i),folder_name)
     file_path = os.path.join(folder_path, filename)
 
     if os.path.exists(file_path) and os.path.getsize(file_path) > 0:

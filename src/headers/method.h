@@ -3,13 +3,10 @@
 //
 
 #pragma once
-#include "gsl/gsl_errno.h"
-#include "gsl/gsl_roots.h"
-#include "gsl/gsl_sf_bessel.h"
-#include "smash.h"
+#include "fileloader.h"
 #include <Eigen/Dense>
 #include <utility>
-
+#include <yaml-cpp/yaml.h>
 namespace Coal {
 
     struct ClusterParams {
@@ -70,10 +67,6 @@ namespace Coal {
                            double beta_y, double beta_z);
 
     Eigen::MatrixXd boostToComMatrix(const Eigen::MatrixXd &particles);
-
-    // std::vector<Eigen::Matrix4d> calculateLorentz(const Eigen::VectorXd &betaX,
-    //                                               const Eigen::VectorXd &betaY,
-    //                                               const Eigen::VectorXd &betaZ);
 
     void calculateLorentz(const Eigen::VectorXd &betaX,
                           const Eigen::VectorXd &betaY,

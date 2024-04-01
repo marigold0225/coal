@@ -7,7 +7,7 @@ General:
     Enable: false
     Cores: 20
   Centrality:
-    Enable: false
+    Enable: true
     Ranges:
       #      - [ 0 , 10 ]
       - [ 10 , 40 ]

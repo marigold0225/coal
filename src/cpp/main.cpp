@@ -19,7 +19,7 @@ int main(const int argc, char* argv[]) {
     std::cout << "Using input file: " << inputfile << std::endl;
 
     auto config = Coal::ConfigParser(inputfile);
-    const auto allEvents = Coal::PreData::readFile(
+    const auto allEvents = Coal::FileLoader::readFile(
         config.inputFileName, config.general["Mode"].as<std::string>());
     handleReactions(allEvents, config);
 
@@ -28,16 +28,3 @@ int main(const int argc, char* argv[]) {
     return 0;
 }
 
-// int main() {
-//
-//     std::cout << "currentPath is:" << std::filesystem::current_path()
-//               << std::endl;
-//
-//     const std::string inputfile = "input/input.yaml";
-//     auto config          = Coal::ConfigParser(inputfile);
-//     const auto allEvents = Coal::PreData::readFile(
-//             config.inputFileName, config.general["Mode"].as<std::string>());
-//     handleReactions(allEvents, config);
-//     std::cout << "All calculating finshed!" << std::endl;
-//     return 0;
-// }

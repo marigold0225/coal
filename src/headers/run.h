@@ -2,7 +2,9 @@
 // Created by mafu on 1/15/2024.
 //
 #pragma once
-#include "clusterMix.h"
+#include <yaml-cpp/yaml.h>
+#include "fileloader.h"
+#include <optional>
 namespace Coal {
 
     struct ConfigParser {

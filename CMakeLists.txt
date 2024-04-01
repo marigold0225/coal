@@ -19,7 +19,10 @@ set(LIB_SOURCE_FILES
         src/headers/run.h
         src/cpp/run.cpp
         src/headers/flow.h
-        src/cpp/flow.cpp)
+        src/cpp/flow.cpp
+        src/headers/random.h
+        src/headers/fileloader.h
+        src/cpp/fileloader.cpp)
 
 
 find_package(TBB REQUIRED)

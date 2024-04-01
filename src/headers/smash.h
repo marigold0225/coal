@@ -3,106 +3,22 @@
 //
 
 #pragma once
-#include "flow.h"
-#include "particle.h"
-#include <chrono>
+#include "fileloader.h"
 #include <map>
-#include <random>
 #include <string>
 #include <vector>
 #include <yaml-cpp/yaml.h>
-#define M_PI 3.14159265358979323846
 namespace Coal {
-
-    using RapidityRange      = std::pair<double, double>;
-    using RapidityArray      = std::vector<RapidityRange>;
-    using Pair               = std::pair<int, int>;
-    using ParticleArray      = std::vector<Particle>;
-    using MultiParticleArray = std::vector<ParticleArray>;
-    using ParticleTypeMap    = std::map<int, ParticleArray>;
-    //[pdg,particles]
-    using ParticleEventMap = std::map<int, ParticleArray>;
-    //[eventID,particles]
-    using EventsMap = std::map<int, ParticleTypeMap>;
-    //[centrility, EventMap]
-    using CentralityMap = std::map<Pair, EventsMap>;
-    //[eventID,EventPlane angle]
-    using EventPlaneMap = std::map<int, double>;
-
-    struct ResParams {
-        double Q_x;
-        double Q_y;
-        double Psi_1;
-        double Q_x_A;
-        double Q_y_A;
-        double Q_x_B;
-        double Q_y_B;
-        double Q_x_C;
-        double Q_y_C;
-        double cos_N_AB;
-        double cos_N_AC;
-        double cos_N_BC;
-    };
 
     class PreData {
     public:
-        EventsMap AllEvents{};
-
         PreData() = default;
-
-        static EventsMap readFile(const std::string &filename,
-                                  const std::string &mode);
-
-        static void getPtArray(const EventsMap &allEvents, int pdg,
-                               const std::string &outputFilename,
-                               const RapidityArray &rapidityArray,
-                               const std::pair<double, int> &ptBins);
-
-
-        static void getFlow(const EventsMap &allEvents, int pdg,
-                          const std::string &outputFilename,
-                          const RapidityArray &rapidityArray,
-                          const std::pair<double, int> &ptBins);
 
         static CentralityMap getCentralityMap(const EventsMap &allEvents,
                                               const YAML::Node &config);
 
-
     private:
 
-        static double Psi(double y, double x);
-
-        static ResParams getResolution(const ParticleEventMap &OneEvent, int N);
-
-        static void rotateEventPlane(ParticleTypeMap &OneEvent, double angle);
-
-        static void readFileSmash(const std::string &filename,
-                                  EventsMap &allEvents);
-
-        static void readSmashLine(const std::string &line,
-                                  ParticleTypeMap &event);
-
-        static void LoadPDGcode(std::unordered_map<int, int> &pdgChargeMap,
-                                const std::string &filename);
-
-        static void
-        setParticleCharge(Particle &particle,
-                          const std::unordered_map<int, int> &pdgChargeMap);
-
-        static void
-        readAmptLine(const std::string &line, ParticleTypeMap &event,
-                     const std::unordered_map<int, int> &pdgChargeMap);
-
-        static void readFileAmpt(const std::string &filename,
-                                 EventsMap &allEvents);
-
-        static void readLineCluster(const std::string &line,
-                                    ParticleTypeMap &events);
-        static void readFileCluster(const std::string &filename,
-                                    EventsMap &allEvents);
-
-        static void readFileBinary(const std::string &filename,
-                                   EventsMap &allEvents);
         static int countChargeParticles(const ParticleEventMap &OneEvent);
 
         static std::map<int, int>
@@ -122,46 +38,4 @@ namespace Coal {
 
         static bool fileExistsInCurrentDir(const std::string &name);
     };
-
-    class RandomNumber {
-    public:
-        // void seed(const unsigned int seed) { gen.seed(seed); }
-        void seed(const int seed) {
-            if (seed == -1) {
-                const auto now = std::chrono::system_clock::now();
-                const auto milliseconds =
-                        std::chrono::duration_cast<std::chrono::milliseconds>(
-                                now.time_since_epoch())
-                                .count();
-                gen.seed(static_cast<unsigned int>(milliseconds % 100000000));
-            } else {
-                gen.seed(static_cast<unsigned int>(seed));
-            }
-        }
-
-        double uniform(const double min, const double max) {
-            std::uniform_real_distribution dis(min, max);
-            return dis(gen);
-        }
-
-        static RandomNumber &getInstance() {
-            static RandomNumber instance;
-            return instance;
-        }
-
-        RandomNumber(RandomNumber const &) = delete;
-
-        void operator=(RandomNumber const &) = delete;
-
-        std::mt19937 &getGenerator() { return gen; }
-
-    private:
-        std::mt19937 gen;
-
-        RandomNumber() {
-            std::random_device rd;
-            gen = std::mt19937(rd());
-        }
-    };
-
 }// namespace Coal

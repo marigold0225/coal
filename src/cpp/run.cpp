@@ -2,6 +2,10 @@
 // Created by mafu on 1/15/2024.
 //
 #include "../headers/run.h"
+#include "../headers/clusterMix.h"
+#include "../headers/smash.h"
+#include "../headers/random.h"
+#include "../headers/flow.h"
 #include <iostream>
 #include <ranges>
 
@@ -26,6 +30,7 @@ void Coal::processReaction(
         const std::string &reactionName, const EventsMap &allEvents,
         const YAML::Node &clusterParamsNode, const ConfigParser &data,
         const std::optional<std::pair<int, int>> &centrality = std::nullopt) {
+
     const auto cluster = ClusterParams(clusterParamsNode[reactionName]);
     const std::string centralitySuffix =
             centrality ? std::to_string(centrality->first) + "-" +
@@ -46,7 +51,6 @@ void Coal::processReaction(
     }
 }
 
-
 void Coal::handleReactions(const EventsMap &allEvents,
                            const ConfigParser &data) {
 
@@ -62,7 +66,7 @@ void Coal::handleReactions(const EventsMap &allEvents,
                 constructFilename(data.outputPath, particleName, suffix);
         std::cout << "Calculating " << particleName << " for " << suffix
                   << "...\n";
-        PreData::getFlow(events, pdg, outputFilename, rapidityRange,
+        getFlow(events, pdg, outputFilename, rapidityRange,
                        {0.2, 10});
     };
 
