@@ -3,10 +3,9 @@ cmake_minimum_required(VERSION 3.27)
 project(coal)
 
 set(CMAKE_CXX_STANDARD 20)
-
 ##
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -ftree-vectorize -mavx -mfma")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -march=native -ftree-vectorize -mavx -mfma")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -fno-math-errno -march=native -ftree-vectorize -mavx -mfma")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -fopenmp -fno-math-errno -march=native -ftree-vectorize -mavx -mfma")
 
 set(LIB_SOURCE_FILES
         src/headers/smash.h
@@ -18,20 +17,27 @@ set(LIB_SOURCE_FILES
         src/headers/particle.h
         src/cpp/particle.cpp
         src/headers/run.h
-        src/cpp/run.cpp)
+        src/cpp/run.cpp
+        src/headers/flow.h
+        src/cpp/flow.cpp)
 
 
-#find_package(TBB REQUIRED)
+find_package(TBB REQUIRED)
 # lib
 add_library(coal_lib STATIC ${LIB_SOURCE_FILES})
 
 # exec
 add_executable(${PROJECT_NAME} src/cpp/main.cpp)
-#target_link_libraries(coal_lib TBB::tbb)
-target_link_libraries(coal_lib)
+target_link_libraries(coal_lib TBB::tbb)
+#target_link_libraries(coal_lib)
 target_link_libraries(${PROJECT_NAME} coal_lib)
 
-# 3rd
+# GSL
+find_package(GSL REQUIRED)
+include_directories(${GSL_INCLUDE_DIRS})
+target_link_libraries(coal_lib ${GSL_LIBRARIES})
+
+# YAML
 add_subdirectory(3rdparty/yaml-cpp)
 target_link_libraries(coal_lib yaml-cpp)
 
@@ -51,7 +57,12 @@ add_subdirectory(googletest)
 include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
 # test
-#add_subdirectory(tests)
+#message(STATUS "Your debug message")
+add_subdirectory(tests)
+
+# benchmark
+add_subdirectory(benchmark)
+
 
 
 

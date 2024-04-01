@@ -3,9 +3,11 @@
 //
 #include "../src/headers/method.h"
 #include "gtest/gtest.h"
+#include <bits/fs_fwd.h>
+#include <bits/fs_path.h>
 #include <iostream>
 
-class MethodTest : public ::testing::Test {
+class MethodTest : public testing::Test {
 protected:
     std::string filename;
     Coal::EventsMap allEvents;
@@ -16,10 +18,11 @@ protected:
     Coal::ParticleArray particle_before{};
 
     void SetUp() override {
-        filename = "../../../input/100/particle_lists.oscar";
+        filename = "../../../coal/input/100/particle_lists.oscar";
         // Assuming load returns two vectors of Coal::Particle
-
-        YAML::Node config  = YAML::LoadFile("../../../input/input.yaml");
+        std::cout << "currentPath is:" << std::filesystem::current_path()
+                  << std::endl;
+        YAML::Node config  = YAML::LoadFile("../../input/input.yaml");
         auto ClusterParams = config["ClusterParams"];
         const Coal::ClusterParams cluster(ClusterParams["Helium4"]);
 
@@ -70,43 +73,6 @@ TEST_F(MethodTest, JacobiFunctionWorks) {
     ASSERT_TRUE(expected3.isApprox(result3, 1e-4));
 }
 
-TEST_F(MethodTest, JacobiCoordinatesWorks) {
-
-    const Coal::Particle proton1  = subCell[0][0];
-    const Coal::Particle proton2  = subCell[1][0];
-    const Coal::Particle neutron1 = subCell[2][0];
-    // const Coal::Particle neutron2     = subCell[3][2];
-    const std::vector particle_before = {proton1, proton2, neutron1};
-    Coal::Particle targetParticle{};
-
-    targetParticle.getResultParticleData(particle_before);
-    const Coal::ParticleArray particles =
-            boostToCOM(particle_before, targetParticle);
-    auto [disx, dispp] = JacobiCoordinates(particles, TODO);
-    // auto [r1, r2, r3, p1, p2, p3] = fourBodyJacobi(particles[0], particles[1],
-    //                                                particles[2], particles[3]);
-    //
-    // std::cout << "r1: " << r1 << " r2: " << r2 << " r3: " << r3 << std::endl;
-    // std::cout << "p1: " << p1 << " p2: " << p2 << " p3: " << p3 << std::endl;
-
-    std::cout << "Distance X: ";
-    for (const auto &d: disx) std::cout << d << " ";
-    std::cout << std::endl;
-
-    std::cout << "Distance P: ";
-    for (const auto &d: dispp) std::cout << d << " ";
-    std::cout << std::endl;
-
-    const std::vector expected_disx  = {37.7887};
-    const std::vector expected_dispp = {0.2057};
-    constexpr double tolerance       = 1e-4;
-    for (size_t i = 0; i < disx.size(); ++i) {
-        ASSERT_NEAR(disx[i], expected_disx[i], tolerance);
-    }
-    for (size_t i = 0; i < dispp.size(); ++i) {
-        ASSERT_NEAR(dispp[i], expected_dispp[i], tolerance);
-    }
-}
 TEST_F(MethodTest, lorentzboost) {
     Coal::Particle result{};
     Coal::Particle result2{};

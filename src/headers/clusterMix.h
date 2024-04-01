@@ -3,10 +3,10 @@
 //
 #pragma once
 #include "method.h"
-
 namespace Coal {
 
-    struct ComputationMatrices {
+    struct MatrixMemPool {
+
         Eigen::Map<Eigen::MatrixXd> combinedX;
         Eigen::Map<Eigen::MatrixXd> combinedY;
         Eigen::Map<Eigen::MatrixXd> combinedZ;
@@ -17,12 +17,7 @@ namespace Coal {
         Eigen::Map<Eigen::MatrixXd> combinedP0;
         Eigen::Map<Eigen::MatrixXd> combinedMass;
         Eigen::Map<Eigen::MatrixXd> combinedProbability;
-        Eigen::Map<Eigen::MatrixXd> x_jacobi;
-        Eigen::Map<Eigen::MatrixXd> y_jacobi;
-        Eigen::Map<Eigen::MatrixXd> z_jacobi;
-        Eigen::Map<Eigen::MatrixXd> px_jacobi;
-        Eigen::Map<Eigen::MatrixXd> py_jacobi;
-        Eigen::Map<Eigen::MatrixXd> pz_jacobi;
+        Eigen::Map<Eigen::MatrixXd> temReplicatedMaxCoeff;
         Eigen::Map<Eigen::MatrixXd> dr;
         Eigen::Map<Eigen::MatrixXd> dp;
         Eigen::Map<Eigen::VectorXd> beta_x;
@@ -31,41 +26,47 @@ namespace Coal {
         Eigen::Map<Eigen::VectorXd> diff;
 
         // Constructor
-        ComputationMatrices(double *memPool, long size_last, int N);
+        MatrixMemPool(double *memPool, int size_last, int N);
         void reset();
     };
 
 
-    void clusterMatrix(const EventsMap &allEvents,
-                       const std::string &outputFilename,
-                       const std::string &ptFilename,
-                       const ClusterParams &params, const YAML::Node &output);
+    void singleThreadedParallelism(const EventsMap &allEvents,
+                                   const std::string &outputFilename,
+                                   const std::string &ptFilename,
+                                   const ClusterParams &params,
+                                   const YAML::Node &output);
 
     void resetGlobalState();
 
-    void clusterThreadV2(const EventsMap &allEvents,
-                         const std::string &outputFilename,
-                         const std::string &ptFilename,
-                         const ClusterParams &params, const YAML::Node &config);
+    void multithreadedParallelism(const EventsMap &allEvents,
+                                  const std::string &outputFilename,
+                                  const std::string &ptFilename,
+                                  const ClusterParams &params,
+                                  const YAML::Node &config);
 
     void createThreadPool(unsigned int num_threads, const ClusterParams &params,
                           Eigen::MatrixXd &targetParticles);
 
-    void processSubCellMatrix(const std::vector<Eigen::MatrixXd> &subCell,
-                              const ClusterParams &params,
-                              Eigen::MatrixXd &targetParticles);
+    void processSubCell(const std::vector<Eigen::MatrixXd> &subCell,
+                        const ClusterParams &params,
+                        Eigen::MatrixXd &targetParticles);
 
-    void outputTargetParticleMatrix(
-            const Eigen::MatrixXd &targetParticles,
-            std::ofstream &outputCluster,
-            std::map<RapidityRange, std::vector<double>> &ptArray,
-            std::map<RapidityRange, double> &yeildArray,
-            const ClusterParams &params, const RapidityArray &rapidityArray,
-            const bool &extended,
-            std::map<RapidityRange, std::vector<double>> &v2Array,
-            std::map<RapidityRange, std::vector<double>> &countArray);
+    void outputMatrix(const Eigen::MatrixXd &targetParticles,
+                      std::ofstream &outputCluster,
+                      std::map<RapidityRange, std::vector<double>> &ptArray,
+                      std::map<RapidityRange, double> &yeildArray,
+                      const ClusterParams &params,
+                      const RapidityArray &rapidityArray, const bool &extended,
+                      std::map<RapidityRange, std::vector<double>> &v2Array,
+                      std::map<RapidityRange, std::vector<double>> &countArray);
 
-    void outputTargetParticleBinary(
+    // void outputV2(const Eigen::MatrixXd &targetParticles,
+    //               std::map<RapidityRange, std::vector<double>> &v2Array,
+    //               const ClusterParams &params,
+    //               const RapidityArray &rapidityArray);
+
+    void outputBinary(
             const ParticleArray &targetParticles, std::ofstream &outputCluster,
             std::map<std::pair<double, double>, std::vector<double>> &ptArray,
             const ClusterParams &params, const RapidityArray &rapidityArray);
@@ -80,8 +81,8 @@ namespace Coal {
                         const std::vector<int> &counts);
 
 
-    Eigen::MatrixXd mainLoopMatrix(const std::vector<Eigen::MatrixXd> &MArray,
-                                   const ClusterParams &params);
+    Eigen::MatrixXd mainLoop(const std::vector<Eigen::MatrixXd> &MArray,
+                             const ClusterParams &params);
 
 
     //jump vaild loop
@@ -92,16 +93,19 @@ namespace Coal {
     std::string createKeyFromMultiIndex(const std::vector<int> &multiIndex,
                                         int index);
 
-    std::vector<bool> checkCombinationList(
+    std::vector<bool> CheckingPortfolioValidity(
             const Eigen::MatrixXd &ParticlesList, const ClusterParams &params,
             const std::vector<int> &counts, const std::vector<int> &multIndex,
             std::vector<int> &jumpMultiIndex,
             std::unordered_map<std::string, double> &distanceCache);
 
-    void batchProcessLastParticlesCols(
-            const Eigen::MatrixXd &Particles,
-            const Eigen::MatrixXd &LastParticles, const ClusterParams &params,
+    void setMatrix(MatrixMemPool &temMatrix, const Eigen::MatrixXd &particles,
+                   const Eigen::MatrixXd &lastParticles);
+
+    void vectorizationWithLastArray(
+            int size_last, const ClusterParams &params,
             Eigen::Matrix<double, Eigen::Dynamic, 11> &targetParticles,
-            ComputationMatrices &tempMatrices);
+            MatrixMemPool &tempMatrixs,
+            std::vector<Eigen::Matrix4d> &lorentzMatrixs);
 
 }// namespace Coal

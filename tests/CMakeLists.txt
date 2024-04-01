@@ -1,3 +1,5 @@
+# 设置最小CMake版本
+cmake_minimum_required(VERSION 3.27)
 # 定义测试文件
 set(TEST_FILES
         test_cluster.cpp

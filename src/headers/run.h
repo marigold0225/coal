@@ -5,7 +5,7 @@
 #include "clusterMix.h"
 namespace Coal {
 
-    struct ConfigData {
+    struct ConfigParser {
         YAML::Node input;
         std::string inputFileName;
         std::string outputPath;
@@ -14,27 +14,15 @@ namespace Coal {
         int seed;
         YAML::Node general;
         YAML::Node output;
+        explicit ConfigParser(const std::string &filename);
     };
-
-    ConfigData readCondig(const std::string &fileName);
 
     void processReaction(const std::string &reactionName,
                          const EventsMap &allEvents,
                          const YAML::Node &clusterParamsNode,
-                         const ConfigData &data,
+                         const ConfigParser &data,
                          const std::optional<std::pair<int, int>> &centrality);
 
-    void handleReactions(const EventsMap &allEvents, const ConfigData &data);
+    void handleReactions(const EventsMap &allEvents, const ConfigParser &data);
 
-    void prapareEachReaction(const YAML::Node &config,
-                             const CentralityMap &centralityMap,
-                             const std::string &reactionName);
-    void prapareSpecReaction(const YAML::Node &config,
-                             const CentralityMap &centralityMap,
-                             const std::string &fromfileName,
-                             const std::string &reactionName);
-
-    void handleCentralityCalculation(const std::string &configFileName);
-
-    void handleNoCentralityCalculation(const std::string &configFileName);
 }// namespace Coal

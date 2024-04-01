@@ -4,35 +4,35 @@ General:
   Filename: particle_lists.oscar
   Seed: -1 # custom or -1
   Parallel:
-    Enable: true
+    Enable: false
     Cores: 20
   Centrality:
-    Enable: true
+    Enable: false
     Ranges:
-      - [ 0 , 20 ]
-#      - [ 10 , 20 ]
+      #      - [ 0 , 10 ]
+      - [ 10 , 40 ]
 #      - [ 20 , 40 ]
 #      - [ 40 , 80 ]
 Output:
   FileType: dat # oscar or binary
   Extended: true
-  Path: output/0/4
+  Path: output/smash/0
   RapidityRange:
     - [ -0.1, 0.0 ]
     - [ -0.2, -0.1 ]
     - [ -0.3, -0.2 ]
     - [ -0.4, -0.3 ]
     - [ -0.5, -0.4 ]
-    - [ -0.6, -0.5 ]
-    - [ -0.7, -0.6 ]
-    - [ -0.8, -0.7 ]
-    - [ -0.9, -0.8 ]
-    - [ -1.0, -0.9 ]
+#    - [ -0.6, -0.5 ]
+#    - [ -0.7, -0.6 ]
+#    - [ -0.8, -0.7 ]
+#    - [ -0.9, -0.8 ]
+#    - [ -1.0, -0.9 ]
 
 Reactions:
-  Deuteron: true
-  Helium3: true
-  Helium4: true
+  Deuteron: false
+  Helium3: false
+  Helium4: false
   Li5: false
   Li6: false
   Be8: false
@@ -52,7 +52,7 @@ ClusterParams:
       - [ -1.5,1.5 ]
       - [ -1.5,1.5 ]
     Sig: [ 2.262741 ]
-    gc: 3/4
+    gc: 3/8
     PDG: 222
     TargetRapidity: [ -0.5,0.5 ]
     ProbCut: 0.0004444

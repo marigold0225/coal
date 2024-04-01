@@ -3,6 +3,9 @@
 //
 
 #pragma once
+#include "gsl/gsl_errno.h"
+#include "gsl/gsl_roots.h"
+#include "gsl/gsl_sf_bessel.h"
 #include "smash.h"
 #include <Eigen/Dense>
 #include <utility>
@@ -34,6 +37,7 @@ namespace Coal {
 
         void setMassArray(const std::vector<double> &massArray);
     };
+
 
     double parseFraction(const std::string &fraction);
 
@@ -67,9 +71,25 @@ namespace Coal {
 
     Eigen::MatrixXd boostToComMatrix(const Eigen::MatrixXd &particles);
 
-    std::vector<Eigen::Matrix4d> calculateLorentz(const Eigen::VectorXd &betaX,
-                                                  const Eigen::VectorXd &betaY,
-                                                  const Eigen::VectorXd &betaZ);
+    // std::vector<Eigen::Matrix4d> calculateLorentz(const Eigen::VectorXd &betaX,
+    //                                               const Eigen::VectorXd &betaY,
+    //                                               const Eigen::VectorXd &betaZ);
+
+    void calculateLorentz(const Eigen::VectorXd &betaX,
+                          const Eigen::VectorXd &betaY,
+                          const Eigen::VectorXd &betaZ,
+                          std::vector<Eigen::Matrix4d> &lorentzMatrixs);
+
+    void applyLorentzBoost_test(Eigen::Ref<Eigen::MatrixXd> combinedX,
+                                Eigen::Ref<Eigen::MatrixXd> combinedY,
+                                Eigen::Ref<Eigen::MatrixXd> combinedZ,
+                                Eigen::Ref<Eigen::MatrixXd> combinedT,
+                                Eigen::Ref<Eigen::MatrixXd> combinedPX,
+                                Eigen::Ref<Eigen::MatrixXd> combinedPY,
+                                Eigen::Ref<Eigen::MatrixXd> combinedPZ,
+                                Eigen::Ref<Eigen::MatrixXd> combinedP0,
+                                const std::vector<Eigen::Matrix4d> &lorentz);
+
 
     void applyLorentzBoost(Eigen::Ref<Eigen::MatrixXd> combinedX,
                            Eigen::Ref<Eigen::MatrixXd> combinedY,
@@ -82,7 +102,19 @@ namespace Coal {
                            const std::vector<Eigen::Matrix4d> &lorentz);
 
     std::tuple<std::vector<double>, std::vector<double>>
+    JacobiCoordinatesMatrix_test(const Eigen::MatrixXd &particles,
+                                 const ClusterParams &params);
+
+    std::tuple<std::vector<double>, std::vector<double>>
     JacobiCoordinatesMatrix(const Eigen::MatrixXd &particles,
                             const ClusterParams &params);
+
+    std::tuple<std::vector<double>, std::vector<double>>
+    JacobiCoordinatesMatrix_test2(const Eigen::MatrixXd &particles,
+                                  const ClusterParams &params);
+
+    std::pair<Eigen::VectorXd, Eigen::VectorXd>
+    JacobiCoordinatesMatrixOptimized(const Eigen::MatrixXd &particles,
+                                     const ClusterParams &params);
 
 }// namespace Coal

@@ -80,7 +80,15 @@ double Coal::Particle::getRapidity() const {
 
 double Coal::Particle::getPT() const { return std::sqrt(px * px + py * py); }
 
-double Coal::Particle::getArtifactRapidity() const {
+double Coal::Particle::getPhi() const {
+    double angle = std::atan2(py, px);
+    if (angle < 0.0) {
+        angle += 2.0 * M_PI;
+    }
+    return angle;
+}
+
+double Coal::Particle::getPseudoRapidity() const {
     const double p_total = std::sqrt(px * px + py * py + pz * pz);
     if (p_total <= pz) {
         return 0.0;

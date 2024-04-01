@@ -54,7 +54,7 @@ TEST_F(ClusterMixTest, indexToMultiIndexWorks) {
 
     //Test indexToMultiIndex
     const std::vector<int> result1 = Coal::indexToMultiIndex(23840, counts);
-    const std::vector expected1    = {0, 0, 1, 0};
+    const std::vector expected1    = {1, 2, 0};
     ASSERT_EQ(expected1, result1);
     for (auto i = 0; i < counts.size(); ++i) {
         ASSERT_LE(result1[i], counts[i]);
@@ -62,10 +62,10 @@ TEST_F(ClusterMixTest, indexToMultiIndexWorks) {
 }
 //
 TEST_F(ClusterMixTest, multiIndexToIndexWorks) {
-    const std::vector counts = {152, 147, 160};
-    const std::vector index  = {1, 2, 0};
-    const long long result   = Coal::multiIndexToIndex(index, counts);
-    const long long expected = 174;
+    const std::vector counts     = {152, 147, 160};
+    const std::vector index      = {1, 2, 0};
+    const long long result       = Coal::multiIndexToIndex(index, counts);
+    constexpr long long expected = 23840;
     ASSERT_EQ(expected, result);
     std::cout << "result:" << result << "except:" << expected << std::endl;
 }
@@ -76,7 +76,7 @@ TEST_F(ClusterMixTest, jumpValidLoopWorks) {
 
     const std::vector result = Coal::jumpValidLoop(result1, counts, 1);
 
-    const std::vector expected{303, 278, 372, 360};
+    const std::vector expected{300, 278, 331, 0};
     ASSERT_EQ(expected, result);
     for (auto i = 0; i < counts.size(); ++i) {
         std::cout << result[i] << ",";

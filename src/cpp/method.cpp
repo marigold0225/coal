@@ -225,12 +225,51 @@ Eigen::MatrixXd Coal::boostToComMatrix(const Eigen::MatrixXd &particles) {
     }
     return boostedParticles;
 }
-std::vector<Eigen::Matrix4d>
-Coal::calculateLorentz(const Eigen::VectorXd &betaX,
-                       const Eigen::VectorXd &betaY,
-                       const Eigen::VectorXd &betaZ) {
-    std::vector<Eigen::Matrix4d> lorentzMatrices;
-    lorentzMatrices.reserve(betaX.size());
+// std::vector<Eigen::Matrix4d>
+// Coal::calculateLorentz(const Eigen::VectorXd &betaX,
+//                        const Eigen::VectorXd &betaY,
+//                        const Eigen::VectorXd &betaZ) {
+//     std::vector<Eigen::Matrix4d> lorentzMatrices;
+//     lorentzMatrices.reserve(betaX.size());
+//     for (int i = 0; i < betaX.size(); ++i) {
+//         const double beta_x = betaX(i);
+//         const double beta_y = betaY(i);
+//         const double beta_z = betaZ(i);
+//         double beta2 = beta_x * beta_x + beta_y * beta_y + beta_z * beta_z;
+//
+//         if (beta2 == 0 || beta2 < 1e-6) {
+//             lorentzMatrices.emplace_back(Eigen::Matrix4d::Identity());
+//             continue;
+//         }
+//         if (beta2 > 0.999999999) {
+//             beta2 = 0.999999999;
+//         }
+//
+//         double gamma = 1.0 / sqrt(1.0 - beta2);
+//
+//         Eigen::Matrix4d lambda;
+//         lambda << gamma, -gamma * beta_x, -gamma * beta_y, -gamma * beta_z,
+//                 -gamma * beta_x, 1 + (gamma - 1) * beta_x * beta_x / beta2,
+//                 (gamma - 1) * beta_x * beta_y / beta2,
+//                 (gamma - 1) * beta_x * beta_z / beta2, -gamma * beta_y,
+//                 (gamma - 1) * beta_y * beta_x / beta2,
+//                 1 + (gamma - 1) * beta_y * beta_y / beta2,
+//                 (gamma - 1) * beta_y * beta_z / beta2, -gamma * beta_z,
+//                 (gamma - 1) * beta_z * beta_x / beta2,
+//                 (gamma - 1) * beta_z * beta_y / beta2,
+//                 1 + (gamma - 1) * beta_z * beta_z / beta2;
+//
+//         lorentzMatrices.push_back(lambda);
+//     }
+//     return lorentzMatrices;
+// }
+
+void Coal::calculateLorentz(const Eigen::VectorXd &betaX,
+                            const Eigen::VectorXd &betaY,
+                            const Eigen::VectorXd &betaZ,
+                            std::vector<Eigen::Matrix4d> &lorentzMatrixs) {
+
+    assert(lorentzMatrixs.size() == betaX.size());
     for (int i = 0; i < betaX.size(); ++i) {
         const double beta_x = betaX(i);
         const double beta_y = betaY(i);
@@ -238,7 +277,7 @@ Coal::calculateLorentz(const Eigen::VectorXd &betaX,
         double beta2 = beta_x * beta_x + beta_y * beta_y + beta_z * beta_z;
 
         if (beta2 == 0 || beta2 < 1e-6) {
-            lorentzMatrices.emplace_back(Eigen::Matrix4d::Identity());
+            lorentzMatrixs[i] = Eigen::Matrix4d::Identity();
             continue;
         }
         if (beta2 > 0.999999999) {
@@ -259,20 +298,20 @@ Coal::calculateLorentz(const Eigen::VectorXd &betaX,
                 (gamma - 1) * beta_z * beta_y / beta2,
                 1 + (gamma - 1) * beta_z * beta_z / beta2;
 
-        lorentzMatrices.push_back(lambda);
+        lorentzMatrixs[i] = lambda;
     }
-    return lorentzMatrices;
 }
 
-void Coal::applyLorentzBoost(Eigen::Ref<Eigen::MatrixXd> combinedX,
-                             Eigen::Ref<Eigen::MatrixXd> combinedY,
-                             Eigen::Ref<Eigen::MatrixXd> combinedZ,
-                             Eigen::Ref<Eigen::MatrixXd> combinedT,
-                             Eigen::Ref<Eigen::MatrixXd> combinedPX,
-                             Eigen::Ref<Eigen::MatrixXd> combinedPY,
-                             Eigen::Ref<Eigen::MatrixXd> combinedPZ,
-                             Eigen::Ref<Eigen::MatrixXd> combinedP0,
-                             const std::vector<Eigen::Matrix4d> &lorentz) {
+
+void Coal::applyLorentzBoost_test(Eigen::Ref<Eigen::MatrixXd> combinedX,
+                                  Eigen::Ref<Eigen::MatrixXd> combinedY,
+                                  Eigen::Ref<Eigen::MatrixXd> combinedZ,
+                                  Eigen::Ref<Eigen::MatrixXd> combinedT,
+                                  Eigen::Ref<Eigen::MatrixXd> combinedPX,
+                                  Eigen::Ref<Eigen::MatrixXd> combinedPY,
+                                  Eigen::Ref<Eigen::MatrixXd> combinedPZ,
+                                  Eigen::Ref<Eigen::MatrixXd> combinedP0,
+                                  const std::vector<Eigen::Matrix4d> &lorentz) {
 
     Eigen::Vector4d particleMomentum;
     Eigen::Vector4d particlePosition;
@@ -305,59 +344,94 @@ void Coal::applyLorentzBoost(Eigen::Ref<Eigen::MatrixXd> combinedX,
         }
     }
 }
+void Coal::applyLorentzBoost(Eigen::Ref<Eigen::MatrixXd> combinedX,
+                             Eigen::Ref<Eigen::MatrixXd> combinedY,
+                             Eigen::Ref<Eigen::MatrixXd> combinedZ,
+                             Eigen::Ref<Eigen::MatrixXd> combinedT,
+                             Eigen::Ref<Eigen::MatrixXd> combinedPX,
+                             Eigen::Ref<Eigen::MatrixXd> combinedPY,
+                             Eigen::Ref<Eigen::MatrixXd> combinedPZ,
+                             Eigen::Ref<Eigen::MatrixXd> combinedP0,
+                             const std::vector<Eigen::Matrix4d> &lorentz) {
 
-// std::tuple<std::vector<double>, std::vector<double>>
-// Coal::JacobiCoordinatesMatrix(const Eigen::MatrixXd &particles,
-//                               const ClusterParams &params) {
-//     const auto N = particles.rows();
-//     Eigen::MatrixXd M, M_inv_t;
-//     if (!params.Fixed) {
-//         std::vector<double> massArray(N);
-//         for (int i = 0; i < N; ++i) {
-//             massArray[i] = particles(i, 4);
-//         }
-//         M       = MassMatrix(massArray);
-//         M_inv_t = M.inverse().transpose();
-//     } else {
-//         if (N - 2 < params.M.size()) {
-//             M       = params.M[N - 2];
-//             M_inv_t = params.M_inv_t[N - 2];
-//         } else {
-//             throw std::runtime_error(
-//                     "Particle count exceeds precomputed matrix size.");
-//         }
-//     }
-//     Eigen::VectorXd x(N), y(N), z(N), px(N), py(N), pz(N);
-//
-//     x  = particles.col(6);
-//     y  = particles.col(7);
-//     z  = particles.col(8);
-//     px = particles.col(1);
-//     py = particles.col(2);
-//     pz = particles.col(3);
-//
-//     auto transformCoordinates = [&](const Eigen::VectorXd &vec,
-//                                     const Eigen::MatrixXd &mat) {
-//         return (mat * vec).tail(vec.size() - 1);
-//     };
-//
-//     Eigen::VectorXd x_jacobi  = transformCoordinates(x, M);
-//     Eigen::VectorXd y_jacobi  = transformCoordinates(y, M);
-//     Eigen::VectorXd z_jacobi  = transformCoordinates(z, M);
-//     Eigen::VectorXd px_jacobi = transformCoordinates(px, M_inv_t);
-//     Eigen::VectorXd py_jacobi = transformCoordinates(py, M_inv_t);
-//     Eigen::VectorXd pz_jacobi = transformCoordinates(pz, M_inv_t);
-//
-//     std::vector<double> d_r(N - 1), d_p(N - 1);
-//     for (auto i = 0; i < N - 1; ++i) {
-//         d_r[i] = sqrt(x_jacobi(i) * x_jacobi(i) + y_jacobi(i) * y_jacobi(i) +
-//                       z_jacobi(i) * z_jacobi(i));
-//         d_p[i] =
-//                 sqrt(px_jacobi(i) * px_jacobi(i) + py_jacobi(i) * py_jacobi(i) +
-//                      pz_jacobi(i) * pz_jacobi(i));
-//     }
-//     return std::make_tuple(d_r, d_p);
-// }
+    Eigen::Vector4d particleMomentum, particlePosition, boostedMomentum,
+            boostedPosition;
+
+    for (int i = 0; i < combinedX.rows(); ++i) {
+
+        for (int j = 0; j < combinedX.cols(); ++j) {
+
+            particleMomentum << combinedP0(i, j), combinedPX(i, j),
+                    combinedPY(i, j), combinedPZ(i, j);
+            particlePosition << combinedT(i, j), combinedX(i, j),
+                    combinedY(i, j), combinedZ(i, j);
+
+            boostedMomentum.noalias() = lorentz[i] * particleMomentum;
+            boostedPosition.noalias() = lorentz[i] * particlePosition;
+
+            combinedPX(i, j) = boostedMomentum(1);
+            combinedPY(i, j) = boostedMomentum(2);
+            combinedPZ(i, j) = boostedMomentum(3);
+            combinedP0(i, j) = boostedMomentum(0);
+            combinedX(i, j)  = boostedPosition(1);
+            combinedY(i, j)  = boostedPosition(2);
+            combinedZ(i, j)  = boostedPosition(3);
+            combinedT(i, j)  = boostedPosition(0);
+        }
+    }
+}
+std::tuple<std::vector<double>, std::vector<double>>
+Coal::JacobiCoordinatesMatrix_test(const Eigen::MatrixXd &particles,
+                                   const ClusterParams &params) {
+    const auto N = particles.rows();
+    Eigen::MatrixXd M, M_inv_t;
+    if (!params.Fixed) {
+        std::vector<double> massArray(N);
+        for (int i = 0; i < N; ++i) {
+            massArray[i] = particles(i, 4);
+        }
+        M       = MassMatrix(massArray);
+        M_inv_t = M.inverse().transpose();
+    } else {
+        if (N - 2 < params.M.size()) {
+            M       = params.M[N - 2];
+            M_inv_t = params.M_inv_t[N - 2];
+        } else {
+            throw std::runtime_error(
+                    "Particle count exceeds precomputed matrix size.");
+        }
+    }
+    Eigen::VectorXd x(N), y(N), z(N), px(N), py(N), pz(N);
+
+    x  = particles.col(6);
+    y  = particles.col(7);
+    z  = particles.col(8);
+    px = particles.col(1);
+    py = particles.col(2);
+    pz = particles.col(3);
+
+    auto transformCoordinates = [&](const Eigen::VectorXd &vec,
+                                    const Eigen::MatrixXd &mat) {
+        return (mat * vec).tail(vec.size() - 1);
+    };
+
+    Eigen::VectorXd x_jacobi  = transformCoordinates(x, M);
+    Eigen::VectorXd y_jacobi  = transformCoordinates(y, M);
+    Eigen::VectorXd z_jacobi  = transformCoordinates(z, M);
+    Eigen::VectorXd px_jacobi = transformCoordinates(px, M_inv_t);
+    Eigen::VectorXd py_jacobi = transformCoordinates(py, M_inv_t);
+    Eigen::VectorXd pz_jacobi = transformCoordinates(pz, M_inv_t);
+
+    std::vector<double> d_r(N - 1), d_p(N - 1);
+    for (auto i = 0; i < N - 1; ++i) {
+        d_r[i] = sqrt(x_jacobi(i) * x_jacobi(i) + y_jacobi(i) * y_jacobi(i) +
+                      z_jacobi(i) * z_jacobi(i));
+        d_p[i] =
+                sqrt(px_jacobi(i) * px_jacobi(i) + py_jacobi(i) * py_jacobi(i) +
+                     pz_jacobi(i) * pz_jacobi(i));
+    }
+    return std::make_tuple(d_r, d_p);
+}
 
 
 std::tuple<std::vector<double>, std::vector<double>>
@@ -394,6 +468,64 @@ Coal::JacobiCoordinatesMatrix(const Eigen::MatrixXd &particles,
                      pz_jacobi(i) * pz_jacobi(i));
     }
     return std::make_tuple(d_r, d_p);
+}
+std::tuple<std::vector<double>, std::vector<double>>
+Coal::JacobiCoordinatesMatrix_test2(const Eigen::MatrixXd &particles,
+                                    const ClusterParams &params) {
+    const auto N = particles.rows();
+
+    auto transformCoordinates = [&](const Eigen::VectorXd &vec,
+                                    const Eigen::MatrixXd &mat) {
+        return (mat * vec).tail(vec.size() - 1);
+    };
+
+    Eigen::MatrixXd r_jacobi(N - 1, 3), p_jacobi(N - 1, 3);
+    r_jacobi.col(0) = transformCoordinates(particles.col(6), params.M[N - 2]);
+    r_jacobi.col(1) = transformCoordinates(particles.col(7), params.M[N - 2]);
+    r_jacobi.col(2) = transformCoordinates(particles.col(8), params.M[N - 2]);
+    p_jacobi.col(0) =
+            transformCoordinates(particles.col(1), params.M_inv_t[N - 2]);
+    p_jacobi.col(1) =
+            transformCoordinates(particles.col(2), params.M_inv_t[N - 2]);
+    p_jacobi.col(2) =
+            transformCoordinates(particles.col(3), params.M_inv_t[N - 2]);
+
+    std::vector<double> d_r(N - 1), d_p(N - 1);
+
+    for (int i = 0; i < N - 1; ++i) {
+        d_r[i] = r_jacobi.row(i).norm();
+        d_p[i] = p_jacobi.row(i).norm();
+    }
+
+    return {d_r, d_p};
+}
+
+std::pair<Eigen::VectorXd, Eigen::VectorXd>
+Coal::JacobiCoordinatesMatrixOptimized(const Eigen::MatrixXd &particles,
+                                       const ClusterParams &params) {
+    const auto N = particles.rows();
+
+    auto transformCoordinates = [&](const Eigen::VectorXd &vec,
+                                    const Eigen::MatrixXd &mat) {
+        return (mat * vec).tail(vec.size() - 1);
+    };
+
+    Eigen::MatrixXd r_jacobi(N - 1, 3), p_jacobi(N - 1, 3);
+    r_jacobi.col(0) = transformCoordinates(particles.col(6), params.M[N - 2]);
+    r_jacobi.col(1) = transformCoordinates(particles.col(7), params.M[N - 2]);
+    r_jacobi.col(2) = transformCoordinates(particles.col(8), params.M[N - 2]);
+    p_jacobi.col(0) =
+            transformCoordinates(particles.col(1), params.M_inv_t[N - 2]);
+    p_jacobi.col(1) =
+            transformCoordinates(particles.col(2), params.M_inv_t[N - 2]);
+    p_jacobi.col(2) =
+            transformCoordinates(particles.col(3), params.M_inv_t[N - 2]);
+
+    // 使用Eigen的矩阵操作计算所有距离和动量的模
+    Eigen::VectorXd d_r = r_jacobi.rowwise().norm();
+    Eigen::VectorXd d_p = p_jacobi.rowwise().norm();
+
+    return {d_r, d_p};
 }
 
 Coal::EventsMap Coal::selectEvents(const EventsMap &eventMap,

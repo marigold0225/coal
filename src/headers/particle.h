@@ -33,7 +33,9 @@ namespace Coal {
 
         [[nodiscard]] double getPT() const;
 
-        [[nodiscard]] double getArtifactRapidity() const;
+        [[nodiscard]] double getPhi() const;
+
+        [[nodiscard]] double getPseudoRapidity() const;
 
         void getFreezeOutPosition();
     };
