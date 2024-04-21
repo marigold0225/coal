@@ -3,7 +3,7 @@
 //
 #include <numeric>
 
-#include "../src/headers/clusterMix.h"
+#include "ClusterCalculator.h"
 #include "gtest/gtest.h"
 
 class ClusterMixTest : public ::testing::Test {

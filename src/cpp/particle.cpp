@@ -109,6 +109,12 @@ void Coal::Particle::getFreezeOutPosition() {
         z -= dt * vz;
     }
 }
+Eigen::MatrixXd Coal::Particle::convertToMatrix() const {
+
+    Eigen::MatrixXd matrix(1, 11);
+    matrix << pdg, px, py, pz, mass, p0, x, y, z, freeze_out_time, probability;
+    return matrix;
+}
 
 void Coal::Particle::updatePosition(const double t_max) {
     const double dt = t_max - freeze_out_time;

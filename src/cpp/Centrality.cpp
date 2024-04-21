@@ -1,12 +1,12 @@
 //
 // Created by mafu on 1/5/2024.
 //
-#include "../headers/smash.h"
+#include "../headers/Centrality.h"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <ranges>
-int Coal::PreData::countChargeParticles(const ParticleEventMap &OneEvent) {
+int Coal::Centrality::countChargeParticles(const ParticleEventMap &OneEvent) {
     int chargeParticleCount = 0;
     for (const auto &particle: OneEvent | std::views::values) {
         for (const auto &p: particle) {
@@ -19,14 +19,14 @@ int Coal::PreData::countChargeParticles(const ParticleEventMap &OneEvent) {
     return chargeParticleCount;
 }
 std::map<int, int>
-Coal::PreData::calculateMultiplicity(const EventsMap &allEvents) {
+Coal::Centrality::calculateMultiplicity(const EventsMap &allEvents) {
     std::map<int, int> multiplicity;
     for (const auto &[eventID, event]: allEvents) {
         multiplicity[eventID] = countChargeParticles(event);
     }
     return multiplicity;
 }
-double Coal::PreData::percentile(const std::vector<int> &multiplicity,
+double Coal::Centrality::percentile(const std::vector<int> &multiplicity,
                                  const double percent) {
     if (multiplicity.empty()) {
         return 0.0;
@@ -52,7 +52,7 @@ double Coal::PreData::percentile(const std::vector<int> &multiplicity,
     return sorteDate[idxlower] * (1.0 - frac) + sorteDate[idxhigh] * frac;
 }
 std::map<Coal::Pair, Coal::Pair>
-Coal::PreData::calculateCentralityBounds(const std::map<int, int> &multiplicity,
+Coal::Centrality::calculateCentralityBounds(const std::map<int, int> &multiplicity,
                                          const YAML::Node &config) {
     std::vector<int> multiplicityVector;
     for (const auto &values: multiplicity | std::views::values) {
@@ -75,16 +75,16 @@ Coal::PreData::calculateCentralityBounds(const std::map<int, int> &multiplicity,
     }
     return centralityBounds;
 }
-void Coal::PreData::checkAndCreateOutputDir(const std::string &outputFilename) {
+void Coal::Centrality::checkAndCreateOutputDir(const std::string &outputFilename) {
     if (!std::filesystem::exists(outputFilename)) {
         std::filesystem::create_directories(outputFilename);
     }
 }
-bool Coal::PreData::fileExistsInCurrentDir(const std::string &name) {
+bool Coal::Centrality::fileExistsInCurrentDir(const std::string &name) {
     return exists(std::filesystem::current_path() / name);
 }
 std::map<int, std::pair<int, int>>
-Coal::PreData::classifyAndCountEvents(const EventsMap &allEvents,
+Coal::Centrality::classifyAndCountEvents(const EventsMap &allEvents,
                                       const YAML::Node &config) {
     auto multiplicity     = calculateMultiplicity(allEvents);
     auto centralityBounds = calculateCentralityBounds(multiplicity, config);
@@ -118,7 +118,7 @@ Coal::PreData::classifyAndCountEvents(const EventsMap &allEvents,
     return eventCentrality;
 }
 
-Coal::CentralityMap Coal::PreData::getCentralityMap(const EventsMap &allEvents,
+Coal::CentralityMap Coal::Centrality::getCentralityMap(const EventsMap &allEvents,
                                                     const YAML::Node &config) {
     CentralityMap centralityMap;
     auto eventCentrality = classifyAndCountEvents(allEvents, config);

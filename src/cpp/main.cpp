@@ -1,13 +1,12 @@
 //
 // Created by mafu on 1/2/2024.
 //
+#include "../headers/logger.h"
 #include "../headers/run.h"
 #include <filesystem>
-#include <fstream>
 #include <iostream>
 
-int main(const int argc, char* argv[]) {
-    std::cout << "currentPath is: " << std::filesystem::current_path() << std::endl;
+int main(const int argc, char *argv[]) {
 
     std::string inputfile = "input/input.yaml";
     for (int i = 1; i < argc - 1; ++i) {
@@ -16,15 +15,26 @@ int main(const int argc, char* argv[]) {
         }
     }
 
-    std::cout << "Using input file: " << inputfile << std::endl;
+    if (!std::filesystem::exists(inputfile)) {
+        std::cerr << "Input file does not exist: " << inputfile << std::endl;
+        return 1;
+    }
 
-    auto config = Coal::ConfigParser(inputfile);
-    const auto allEvents = Coal::FileLoader::readFile(
-        config.inputFileName, config.general["Mode"].as<std::string>());
+    const auto config          = Coal::ConfigParser(inputfile);
+
+    const auto loggerPath = config.outputPath + "/logfile.log";
+
+    Coal::Logger::getInstance().init(loggerPath);
+
+    const auto logger = Coal::Logger::getInstance().get();
+
+    logger->info("Current path is: {}", std::filesystem::current_path().string());
+
+    const auto allEvents = Coal::FileLoader::readFile(config.inputFileName, config.mode);
+
     handleReactions(allEvents, config);
 
-    std::cout << "All calculating finished!" << std::endl;
+    logger->info("All calculating finished!");
 
     return 0;
 }
-

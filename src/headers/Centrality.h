@@ -3,16 +3,16 @@
 //
 
 #pragma once
-#include "fileloader.h"
+#include "shortcut.h"
 #include <map>
 #include <string>
 #include <vector>
 #include <yaml-cpp/yaml.h>
 namespace Coal {
 
-    class PreData {
+    class Centrality {
     public:
-        PreData() = default;
+        Centrality() = default;
 
         static CentralityMap getCentralityMap(const EventsMap &allEvents,
                                               const YAML::Node &config);

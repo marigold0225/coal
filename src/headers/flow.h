@@ -2,8 +2,8 @@
 // Created by mafu on 24-3-26.
 //
 #pragma once
+#include "config.h"
 #include "gsl/gsl_multiroots.h"
-#include "fileloader.h"
 
 namespace Coal {
 
@@ -27,6 +27,31 @@ namespace Coal {
         double cos_N_BC;
     };
 
+    struct ResParamsMap {
+        std::map<int, ResParams> ResMap;
+        EventPlaneMap eventPlaneMap;
+        double Ref_v1;
+        double Ref_v2;
+        std::map<int,Pair> selectEventID;
+    };
+
+    struct flowResult {
+        std::map<RapidityRange, std::vector<double>> ptArray;
+        std::map<RapidityRange, double> yeildArray;
+        std::map<RapidityRange, std::vector<double>> v1Array;
+        std::map<RapidityRange, std::vector<double>> v2Array;
+        std::map<RapidityRange, std::vector<int>> v1Count;
+        std::map<RapidityRange, std::vector<int>> v2Count;
+        std::map<RapidityRange, double> v1overpt;
+        std::map<RapidityRange, int> v1overptCount;
+        std::map<RapidityRange, double> v2overpt;
+        std::map<RapidityRange, int> v2overptCount;
+        std::pair<double, double> ptRange;
+        std::pair<double, int> ptBins;
+
+        explicit flowResult(const RapidityArray &rapidityArray,int bins);
+    };
+
     int eventPlaneEquation(const gsl_vector *x, void *p, gsl_vector *f);
 
     double solveEquation(double a, int k);
@@ -37,11 +62,30 @@ namespace Coal {
 
     ResParams getResolution(const ParticleEventMap &OneEvent, int N);
 
+    ResParamsMap getResolutionMap(const EventsMap &allEvents, int N);
+
     void rotateEventPlane(ParticleTypeMap &OneEvent, double angle);
 
-    void getFlow(const EventsMap &allEvents, int pdg,
-                          const std::string &outputFilename,
-                          const RapidityArray &rapidityArray,
-                          const std::pair<double, int> &ptBins);
+    void roateAllEventPlane(EventsMap &allEvents, const EventPlaneMap &eventPlaneMap);
+
+    void formulateFlow(flowResult& result, double rapidity,double pT,double Psi, double Phi,
+                        const RapidityArray &rapidityArray, const std::pair<double, int> &ptBins,
+                        double weight,const std::pair<double, double> &ptRange,int total_events);
+
+    flowResult calculateFlow(const EventsMap &allEvents, int pdg,
+                             const RapidityArray &rapidityArray,
+                             const std::pair<double, int> &ptBins,
+                             const ResParamsMap &resolution);
+
+    flowResult calculateFlowMatrix(const Eigen::MatrixXd &targetParticles,
+                                   const RapidityArray &rapidityArray,
+                                   const ClusterParams &params,
+                                   const ResParamsMap &resolution);
+
+
+    static double getMatrixPt(const Eigen::MatrixXd &targetParticles, int i);
+
+    static double getMatrixRapidity(const Eigen::MatrixXd &targetParticles, int i);
+
 
 }// namespace Coal

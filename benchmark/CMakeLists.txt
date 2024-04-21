@@ -4,9 +4,9 @@ find_package(benchmark REQUIRED)
 
 set(BENCHMARK_SOURCES
         #        benchmark_test.cpp
-        #        benchmark_lorentzMatrix.cpp
-        #        benchmark_Jacobi.cpp)
-        benchmark_checkValidCombination.cpp)
+                benchmark_lorentzMatrix.cpp)
+#                benchmark_Jacobi.cpp)
+#        benchmark_checkValidCombination.cpp)
 
 add_executable(benchmark_test ${BENCHMARK_SOURCES})
 
