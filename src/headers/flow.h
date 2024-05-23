@@ -87,5 +87,7 @@ namespace Coal {
 
     static double getMatrixRapidity(const Eigen::MatrixXd &targetParticles, int i);
 
+    static double getMatrixPseudoRapidity(const Eigen::MatrixXd &targetParticles, int i);
+
 
 }// namespace Coal

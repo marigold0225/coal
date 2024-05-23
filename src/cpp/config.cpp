@@ -4,6 +4,7 @@
 #include "../headers/config.h"
 
 #include <iostream>
+#include <numeric>
 
 Coal::ConfigParser::ConfigParser(const std::string &filename) {
     YAML::Node config = YAML::LoadFile(filename);
@@ -76,7 +77,8 @@ double Coal::parseFraction(const std::string &fraction) {
 
 Eigen::MatrixXd Coal::MassMatrix(const std::vector<double> &massArray) {
     const int n       = static_cast<int>(massArray.size());
-    Eigen::MatrixXd M = Eigen::MatrixXd::Zero(n, n);
+    // Eigen::MatrixXd M = Eigen::MatrixXd::Zero(n, n);
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> M = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>::Zero(n, n);
 
     const double totalMass = Eigen::VectorXd::Map(massArray.data(), n).sum();
 

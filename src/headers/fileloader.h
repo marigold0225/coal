@@ -16,6 +16,14 @@ namespace Coal {
         static EventsMap readFile(const std::string &filename, const std::string &mode);
 
     private:
+
+        static void readMatlabLine(const std::string &line, ParticleTypeMap &event);
+
+        static void readMusicLine(const std::string &line, ParticleTypeMap &event);
+        static void readMusicFile(const std::string &filename, EventsMap &allEvents);
+        static void readMusicFileCustom(const std::string &filename, EventsMap &allEvents);
+        static void readMatlabFile(const std::string &filename, EventsMap &allEvents);
+
         static void readSmashLine(const std::string &line, ParticleTypeMap &event);
 
         static void readFileSmash(const std::string &filename, EventsMap &allEvents);

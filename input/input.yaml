@@ -1,8 +1,8 @@
 General:
-  Mode: smash # smash /ampt/ cluster / urqmd
-  Path: /mnt/e/data/smash/AuAu2000/0
-  Filename: particle_lists.oscar
-  Seed: -1 # custom or -1
+  Mode: music # smash /ampt/ cluster / urqmd /music
+  Path: output/test #/mnt/e/data/pbpb/pp
+  Filename: particle_list_0  #particle_lists.oscar
+  Seed: 123456 # custom or -1
   Parallel:
     Enable: true
     Cores: 20
@@ -16,12 +16,12 @@ General:
 Output:
   FileType: dat # oscar or binary
   Extended: false
-  Path: output/test/0
+  Path: output/test
   RapidityRange:
-    - [ -0.1, 0.0 ]
-    - [ -0.2, -0.1 ]
-    - [ -0.3, -0.2 ]
-    - [ -0.4, -0.3 ]
+    - [ -0.5, 0.5 ]
+#    - [ -0.2, -0.1 ]
+#    - [ -0.3, -0.2 ]
+#    - [ -0.4, -0.3 ]
 #    - [ -0.5, -0.4 ]
 #    - [ -0.6, -0.5 ]
 #    - [ -0.7, -0.6 ]
@@ -31,11 +31,13 @@ Output:
 
 Reactions:
   Deuteron: false
-  Helium3: false
+  Helium3: true
   Helium4: false
+  HyperTriton: false
+  AntiHyperTriton: false
   Li5: false
   Li6: false
-  Be8: true
+  Be8: false
   Be2: false
   C12: false
   C123: false
@@ -43,7 +45,7 @@ Reactions:
 ClusterParams:
   Deuteron:
     NBody: 2
-    Loop: 1
+    Loop: 100
     MixEvents: 10
     Precision: 25
     From: [ 2212, 2112 ]
@@ -51,17 +53,74 @@ ClusterParams:
       Fixed: true
       Array: [ 0.938, 0.938 ]
     RapidityCut:
-      - [ -1.5,1.5 ]
-      - [ -1.5,1.5 ]
+      - [ -1.0,1.0 ]
+      - [ -1.0,1.0 ]
     Sig: [ 2.262741 ]
     gc: 3/4
     PDG: 222
     TargetRapidity: [ -0.5,0.5 ]
     ProbCut: 0.0004444
     Pt: [ 0.4, 10 ]
+  Helium3:
+    NBody: 3
+    Loop: 1
+    MixEvents: 250
+    Precision: 25
+    From: [ 2212, 2212, 2112 ]
+    MassArray:
+      Fixed: true
+      Array: [ 0.938, 0.938, 0.938 ]
+    RapidityCut:
+      - [ -0.5,0.5 ]
+      - [ -0.5,0.5 ]
+      - [ -0.5,0.5 ]
+    Sig: [ 1.76, 1.76 ]
+    gc: 1/4
+    PDG: 3333
+    TargetRapidity: [ -0.5,0.5 ]
+    ProbCut: 1e-6
+    Pt: [ 1.0, 6 ]
+  HyperTriton:
+    NBody: 3
+    Loop: 1
+    MixEvents: 100
+    Precision: 25
+    From: [ 2212, 2112, 3122 ]
+    MassArray:
+      Fixed: true
+      Array: [ 0.938, 0.938, 1.116 ]
+    RapidityCut:
+      - [ -0.5,0.5 ]
+      - [ -0.5,0.5 ]
+      - [ -0.5,0.5 ]
+    Sig: [ 2.26, 6.52 ]
+    gc: 1/4
+    PDG: 3334
+    TargetRapidity: [ -0.5,0.5 ]
+    ProbCut: 1e-6
+    Pt: [ 1.0, 6 ]
+  AntiHyperTriton:
+    NBody: 3
+    Loop: 1
+    MixEvents: 300
+    Precision: 25
+    From: [ -2212, -2112, -3122 ]
+    MassArray:
+      Fixed: true
+      Array: [ 0.938, 0.938, 1.116 ]
+    RapidityCut:
+      - [ -1.5,1.5 ]
+      - [ -1.5,1.5 ]
+      - [ -1.5,1.5 ]
+    Sig: [ 2.26, 5.45 ]
+    gc: 1/4
+    PDG: 3334
+    TargetRapidity: [ -0.5,0.5 ]
+    ProbCut: 0.0003703704
+    Pt: [ 0.5, 16 ]
   Helium4:
     NBody: 4
-    Loop: 19
+    Loop: 1
     MixEvents: 3
     Precision: 25 # {1,NBody}
     From: [ 2212, 2212, 2112, 2112 ]
@@ -122,28 +181,9 @@ ClusterParams:
     TargetRapidity: [ -0.5, 0.5 ]
     ProbCut: 1.23e-8
     Pt: [ 0.8, 10 ]
-  Helium3:
-    NBody: 3
-    Loop: 100
-    MixEvents: 3
-    Precision: 25
-    From: [ 2212, 2212, 2112 ]
-    MassArray:
-      Fixed: true
-      Array: [ 0.938, 0.938, 0.938 ]
-    RapidityCut:
-      - [ -1.5,1.5 ]
-      - [ -1.5,1.5 ]
-      - [ -1.5,1.5 ]
-    Sig: [ 1.76, 1.76 ]
-    gc: 1/4
-    PDG: 3333
-    TargetRapidity: [ -0.5,0.5 ]
-    ProbCut: 0.0003703704
-    Pt: [ 0.15, 20 ]
   Be8:
     NBody: 8
-    Loop: 19
+    Loop: 1
     MixEvents: 3
     Precision: 10
     From: [ 2212, 2212, 2212, 2212, 2112, 2112, 2112, 2112 ]
@@ -204,8 +244,8 @@ ClusterParams:
     Pt: [ 0.8, 12 ]
   C12:
     NBody: 12
-    Loop: 100
-    MixEvents: 2
+    Loop: 2
+    MixEvents: 1
     Precision: 5
     From: [ 2212, 2212, 2212, 2212,2212,2212, 2112, 2112, 2112, 2112,2112,2112 ]
     MassArray:

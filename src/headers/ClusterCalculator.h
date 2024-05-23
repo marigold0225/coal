@@ -2,6 +2,7 @@
 // Created by mafu on 4/4/2024.
 //
 #pragma once
+#include "ThreadPool.h"
 #include "method.h"
 #include <optional>
 
@@ -41,15 +42,22 @@ namespace Coal {
             void reset();
         };
 
-
         static Eigen::MatrixXd processEventstest(const EventsMap &allEvents,
-                                                  const ClusterParams &params,
-                                                  ResParamsMap &resolution,
-                                                  unsigned int num_threads);
+                                                 const ClusterParams &params,
+                                                 ResParamsMap &resolution,
+                                                 unsigned int num_threads);
         static void processSubCellTest(const std::vector<Eigen::MatrixXd> &subCell,
                                        const ClusterParams &params,
                                        Eigen::MatrixXd &targetParticles, long &usedRows,
                                        int currentIndex);
+
+        static Eigen::MatrixXd processEventsV2(const EventsMap &allEvents,
+                                               const ClusterParams &params,
+                                               unsigned int num_threads,
+                                               ResParamsMap &resolution);
+
+        static std::pair<int, int> getjobRange(int total_size, int num_threads,
+                                               int thread_id);
 
         static Eigen::MatrixXd processEvents(const EventsMap &allEvents,
                                              const ClusterParams &params,
@@ -64,8 +72,13 @@ namespace Coal {
         static Eigen::MatrixXd mainLoop(const std::vector<Eigen::MatrixXd> &MArray,
                                         const ClusterParams &params);
 
-        static void conditionSelect(const MatrixMemPool &tempMatrixs,const ClusterParams& params,
-                                    Eigen::Matrix<double,Eigen::Dynamic,11> &matrixSwap);
+        static Eigen::MatrixXd mainLoopV1(const std::vector<Eigen::MatrixXd> &MArray,
+                                          const ClusterParams &params,
+                                          unsigned int num_threads);
+
+        static void mainLoopV2(const std::vector<Eigen::MatrixXd> &MArray,
+                               const ClusterParams &params, int start_idx, int endidx,
+                               Eigen::MatrixXd &threadOutputs, long &usedRows);
 
         static std::vector<int> jumpValidLoop(const std::vector<int> &multiIndex,
                                               const std::vector<int> &counts,
@@ -82,11 +95,11 @@ namespace Coal {
                 std::vector<bool> &isValidCombination);
 
         static void setMatrix(MatrixMemPool &temMatrix, const Eigen::MatrixXd &particles,
-                              const Eigen::MatrixXd &lastParticles,
-                              const ClusterParams &params);
+                              const Eigen::MatrixXd &lastParticles, int pdg);
 
-        static void vectorizationWithLastArray(const ClusterParams &params,
-                                   MatrixMemPool &tempMatrixs,
-                                   std::vector<Eigen::Matrix4d> &lorentzMatrixs);
+        static void vectorizationWithLastArray(
+                const ClusterParams &params, MatrixMemPool &tempMatrixs,
+                std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>>
+                        &lorentzMatrixs);
     };
 }// namespace Coal

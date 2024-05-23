@@ -12,20 +12,17 @@ bool Coal::Particle::operator!=(const Particle &other) const {
     constexpr double epsilon = 1e-6;
     return std::abs(t - other.t) > epsilon || std::abs(x - other.x) > epsilon ||
            std::abs(y - other.y) > epsilon || std::abs(z - other.z) > epsilon ||
-           std::abs(p0 - other.p0) > epsilon ||
-           std::abs(px - other.px) > epsilon ||
-           std::abs(py - other.py) > epsilon ||
-           std::abs(pz - other.pz) > epsilon;
+           std::abs(p0 - other.p0) > epsilon || std::abs(px - other.px) > epsilon ||
+           std::abs(py - other.py) > epsilon || std::abs(pz - other.pz) > epsilon;
 }
 
 std::tuple<double, double, double>
 Coal::Particle::get4Momentum(const std::vector<Particle> &particles) {
-    return std::accumulate(
-            particles.begin(), particles.end(), std::tuple{0.0, 0.0, 0.0},
-            [](const auto &a, const auto &b) {
-                auto [px, py, pz] = a;
-                return std::tuple{px + b.px, py + b.py, pz + b.pz};
-            });
+    return std::accumulate(particles.begin(), particles.end(), std::tuple{0.0, 0.0, 0.0},
+                           [](const auto &a, const auto &b) {
+                               auto [px, py, pz] = a;
+                               return std::tuple{px + b.px, py + b.py, pz + b.pz};
+                           });
 }
 
 std::tuple<double, double, double, double>
@@ -39,8 +36,7 @@ Coal::Particle::getPosition(const std::vector<Particle> &particles) {
 }
 
 
-void Coal::Particle::getResultParticleData(
-        const std::vector<Particle> &particles) {
+void Coal::Particle::getResultParticleData(const std::vector<Particle> &particles) {
 
     const int n = static_cast<int>(particles.size());
     if (n == 0)
@@ -50,10 +46,10 @@ void Coal::Particle::getResultParticleData(
         charge += particle.charge;
     }
 
-    freeze_out_time = std::ranges::max_element(particles, [](const auto &a,
-                                                             const auto &b) {
-                          return a.freeze_out_time < b.freeze_out_time;
-                      })->freeze_out_time;
+    freeze_out_time =
+            std::ranges::max_element(particles, [](const auto &a, const auto &b) {
+                return a.freeze_out_time < b.freeze_out_time;
+            })->freeze_out_time;
 
     auto [sum_x, sum_y, sum_z, sum_mass] = getPosition(particles);
     auto [sum_px, sum_py, sum_pz]        = get4Momentum(particles);
@@ -97,8 +93,7 @@ double Coal::Particle::getPseudoRapidity() const {
 }
 
 void Coal::Particle::getFreezeOutPosition() {
-    if (freeze_out_time == 0.0 || std::abs(t - freeze_out_time) < 1e-6 ||
-        t == 0.0) {
+    if (std::abs(t - freeze_out_time) < 1e-6 || t == 0.0) {
     } else {
         const double vx = px / p0;
         const double vy = py / p0;
@@ -115,6 +110,13 @@ Eigen::MatrixXd Coal::Particle::convertToMatrix() const {
     matrix << pdg, px, py, pz, mass, p0, x, y, z, freeze_out_time, probability;
     return matrix;
 }
+std::ostream &Coal::operator<<(std::ostream &os, const Particle &particle) {
+    os << particle.pdg << " " << particle.px << " " << particle.py << " " << particle.pz
+       << " " << particle.p0 << " " << particle.mass << " " << particle.x << " "
+       << particle.y << " " << particle.z << " " << particle.freeze_out_time << " "
+       << particle.probability;
+    return os;
+}
 
 void Coal::Particle::updatePosition(const double t_max) {
     const double dt = t_max - freeze_out_time;
@@ -123,8 +125,7 @@ void Coal::Particle::updatePosition(const double t_max) {
     z += dt * pz / p0;
 }
 
-Coal::Particle Coal::Particle::lorentzBoost(const double beta_x,
-                                            const double beta_y,
+Coal::Particle Coal::Particle::lorentzBoost(const double beta_x, const double beta_y,
                                             const double beta_z) const {
     Particle boost_p = *this;
     double beta2     = beta_x * beta_x + beta_y * beta_y + beta_z * beta_z;
@@ -153,14 +154,10 @@ Coal::Particle Coal::Particle::lorentzBoost(const double beta_x,
             freeze_out_time * x_lam02 + x * x_lam12 + y * x_lam22 + z * x_lam23;
     const double new_z =
             freeze_out_time * x_lam03 + x * x_lam13 + y * x_lam23 + z * x_lam33;
-    const double new_p0 =
-            p0 * x_lam00 + px * x_lam01 + py * x_lam02 + pz * x_lam03;
-    const double new_px =
-            p0 * x_lam01 + px * x_lam11 + py * x_lam12 + pz * x_lam13;
-    const double new_py =
-            p0 * x_lam02 + px * x_lam12 + py * x_lam22 + pz * x_lam23;
-    const double new_pz =
-            p0 * x_lam03 + px * x_lam13 + py * x_lam23 + pz * x_lam33;
+    const double new_p0     = p0 * x_lam00 + px * x_lam01 + py * x_lam02 + pz * x_lam03;
+    const double new_px     = p0 * x_lam01 + px * x_lam11 + py * x_lam12 + pz * x_lam13;
+    const double new_py     = p0 * x_lam02 + px * x_lam12 + py * x_lam22 + pz * x_lam23;
+    const double new_pz     = p0 * x_lam03 + px * x_lam13 + py * x_lam23 + pz * x_lam33;
     boost_p.freeze_out_time = new_t;
     boost_p.x               = new_x;
     boost_p.y               = new_y;

@@ -78,9 +78,9 @@ double Coal::getRef(const double x, const int k) {
 
 double Coal::Psi(const double y, const double x) {
     double angle = atan2(y, x);
-    if (angle < 0) {
-        angle += 2 * M_PI;
-    }
+    // if (angle < 0) {
+    //     angle += 2 * M_PI;
+    // }
     return angle;
 }
 
@@ -99,7 +99,7 @@ Coal::ResParams Coal::getResolution(const ParticleEventMap &OneEvent, const int 
     for (const auto &particles: OneEvent | std::views::values) {
         for (const auto &particle: particles) {
             const double pseudoRapidity = particle.getPseudoRapidity();
-            const double rapidity = particle.getRapidity();
+            const double rapidity       = particle.getRapidity();
             const double pT             = particle.getPT();
             const double Phi            = particle.getPhi();
 
@@ -119,21 +119,22 @@ Coal::ResParams Coal::getResolution(const ParticleEventMap &OneEvent, const int 
             //     Q_x_C += pT * std::cos(Phi);
             //     Q_y_C += pT * std::sin(Phi);
             // }
-            if (pseudoRapidity > 2.81 && pseudoRapidity < 5.39) {
-                Q_x += pT * std::cos(Phi);
-                Q_y += pT * std::sin(Phi);
+            if (pseudoRapidity > -0.8 && pseudoRapidity < 0.8 && pT > 0.2 && pT < 20) {
+                Q_x += pT * std::cos(2 * Phi);
+                Q_y += pT * std::sin(2 * Phi);
             }
-            if (pseudoRapidity > 2.81 && pseudoRapidity < 5.09) {
-                Q_x_A += pT * std::cos(Phi);
-                Q_y_A += pT * std::sin(Phi);
+            if (pseudoRapidity > -3.7 && pseudoRapidity < -1.7 ||
+                pseudoRapidity > 2.8 && pseudoRapidity < 5.1) {
+                Q_x_A += pT * std::cos(2 * Phi);
+                Q_y_A += pT * std::sin(2 * Phi);
             }
-            if (pseudoRapidity > 2.14 && pseudoRapidity < 2.81) {
-                Q_x_B += pT * std::cos(Phi);
-                Q_y_B += pT * std::sin(Phi);
+            if (pseudoRapidity < 0.8 && pseudoRapidity > 0.0 && pT > 0.2 && pT < 20) {
+                Q_x_B += pT * std::cos(2 * Phi);
+                Q_y_B += pT * std::sin(2 * Phi);
             }
-            if (pseudoRapidity > 0.1 && pseudoRapidity < 2.0) {
-                Q_x_C += pT * std::cos(Phi);
-                Q_y_C += pT * std::sin(Phi);
+            if (pseudoRapidity > -0.8 && pseudoRapidity < 0.0 && pT > 0.2 && pT < 20) {
+                Q_x_C += pT * std::cos(2 * Phi);
+                Q_y_C += pT * std::sin(2 * Phi);
             }
         }
     }
@@ -168,8 +169,21 @@ Coal::ResParamsMap Coal::getResolutionMap(const EventsMap &allEvents, const int 
         cos_N_BC += ResParamsMap.ResMap[eventId].cos_N_BC;
         ResParamsMap.eventPlaneMap[eventId] = ResParamsMap.ResMap[eventId].Psi_1;
     }
-    ResParamsMap.Ref_v1  = std::sqrt(cos_N_AB * cos_N_AC / cos_N_BC / total_events);
-    ResParamsMap.Ref_v2  = getRef(solveEquation(ResParamsMap.Ref_v1, 1), 2);
+    // ResParamsMap.Ref_v1  = std::sqrt(cos_N_AB * cos_N_AC / cos_N_BC / total_events);
+    // ResParamsMap.Ref_v2 = std::sqrt(cos_N_AB * cos_N_AC / cos_N_BC / total_events);
+    ResParamsMap.Ref_v1 = 0.0;
+    if (cos_N_AB * cos_N_AC / cos_N_BC > 0) {
+        ResParamsMap.Ref_v2 = std::sqrt(cos_N_AB * cos_N_AC / cos_N_BC / total_events);
+    } else {
+        ResParamsMap.Ref_v2 = 0.0;
+    }
+    std::cout << "toal_events:" << total_events << ", "
+              << "cos_N_AB:" << cos_N_AB << ", "
+              << "cos_N_AC:" << cos_N_AC << ", "
+              << "cos_N_BC:" << cos_N_BC << "\n";
+    std::cout << "Ref_v1:" << ResParamsMap.Ref_v1 << ", "
+              << "Ref_v2:" << ResParamsMap.Ref_v2 << std::endl;
+    // ResParamsMap.Ref_v2  = getRef(solveEquation(ResParamsMap.Ref_v1, 1), 2);
     return ResParamsMap;
 }
 
@@ -237,10 +251,11 @@ Coal::flowResult Coal::calculateFlow(const EventsMap &allEvents, const int pdg,
             if (particleType == pdg) {
                 for (const auto &particle: particles) {
                     const double rapidity = particle.getRapidity();
+                    // const double rapidity = particle.getPseudoRapidity();
                     const double pT       = particle.getPT();
                     const double Phi      = particle.getPhi();
-                    constexpr double Psi =0.0;
-                    // const double Psi      = resolution.eventPlaneMap.at(eventId);
+                    // constexpr double Psi  = 0.0;
+                    const double Psi = resolution.eventPlaneMap.at(eventId);
 
                     formulateFlow(result, rapidity, pT, Psi, Phi, rapidityArray, ptBins,
                                   1.0, ptRange, total_events);
@@ -277,7 +292,8 @@ Coal::flowResult Coal::calculateFlowMatrix(const Eigen::MatrixXd &targetParticle
     int currentIndex  = 0;
 
     for (int i = 0; i < targetParticles.rows(); ++i) {
-        const double rapidity = getMatrixRapidity(targetParticles, i);
+        // const double rapidity = getMatrixRapidity(targetParticles, i);
+        const double rapidity = getMatrixPseudoRapidity(targetParticles, i);
         const double pT       = getMatrixPt(targetParticles, i);
         const double phi      = Psi(targetParticles(i, 2), targetParticles(i, 1));
         if (params.mixEvents == 1) {
@@ -286,7 +302,7 @@ Coal::flowResult Coal::calculateFlowMatrix(const Eigen::MatrixXd &targetParticle
                 particleCount = 0;
             }
             int eventId = resolution.selectEventID.at(currentIndex).first;
-            psi        = resolution.eventPlaneMap.at(eventId);
+            psi         = resolution.eventPlaneMap.at(eventId);
             particleCount++;
         } else {
             psi = 0.0;
@@ -306,4 +322,15 @@ double Coal::getMatrixRapidity(const Eigen::MatrixXd &targetParticles, const int
     const double rapidity = 0.5 * log((targetParticles(i, 4) + targetParticles(i, 3)) /
                                       (targetParticles(i, 4) - targetParticles(i, 3)));
     return rapidity;
+}
+double Coal::getMatrixPseudoRapidity(const Eigen::MatrixXd &targetParticles,
+                                     const int i) {
+    const double p_total = std::sqrt(targetParticles(i, 1) * targetParticles(i, 1) +
+                                     targetParticles(i, 2) * targetParticles(i, 2) +
+                                     targetParticles(i, 3) * targetParticles(i, 3));
+
+    const double pseudoRapidity = 0.5 * log((p_total + targetParticles(i, 3)) /
+                                            (p_total - targetParticles(i, 3)));
+
+    return pseudoRapidity;
 }

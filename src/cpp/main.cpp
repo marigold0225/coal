@@ -20,7 +20,7 @@ int main(const int argc, char *argv[]) {
         return 1;
     }
 
-    const auto config          = Coal::ConfigParser(inputfile);
+    const auto config = Coal::ConfigParser(inputfile);
 
     const auto loggerPath = config.outputPath + "/logfile.log";
 

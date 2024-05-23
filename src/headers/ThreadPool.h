@@ -22,18 +22,22 @@ namespace Coal {
 
         ThreadPool(ThreadPool &&)            = delete;
         ThreadPool &operator=(ThreadPool &&) = delete;
-
+        // void enqueueTask(std::function<void(int)> task);
         void enqueueTask(std::function<void()> task);
-
+        void waitAll();
         void stop();
 
     private:
         std::vector<std::thread> workers;
         std::queue<std::function<void()>> tasks;
+        // std::queue<std::pair<std::function<void(int)>, int>> tasks;
         std::mutex queue_mutex;
         std::condition_variable cv;
+        std::condition_variable cv_all_done;
+        std::size_t active_tasks=0;
         bool stop_all;
 
         void workerThread();
+        // void workerThread(int thread_id);
     };
 }// namespace Coal

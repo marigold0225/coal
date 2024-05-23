@@ -44,4 +44,5 @@ namespace Coal {
 
         [[nodiscard]] Eigen::MatrixXd convertToMatrix() const;
     };
+    std::ostream& operator<<(std::ostream& os, const Particle& particle);
 }// namespace Coal

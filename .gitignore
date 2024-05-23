@@ -5,4 +5,8 @@
 /build-debug/
 /build-release/
 /output/
+/googletest/
+/benchmark/
+/3rdparty/
+/scripts/
 .idea

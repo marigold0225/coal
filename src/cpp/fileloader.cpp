@@ -18,10 +18,133 @@ Coal::EventsMap Coal::FileLoader::readFile(const std::string &filename,
         readFileAmpt(filename, allEvents);
     } else if (mode == "urqmd") {
         readFileUrQMD(filename, allEvents);
+    } else if (mode == "matlab") {
+        readMatlabFile(filename, allEvents);
+    } else if (mode == "music") {
+        readMusicFileCustom(filename, allEvents);
     } else {
         throw std::runtime_error("Error: mode " + mode + " not recognized.");
     }
     return allEvents;
+}
+void Coal::FileLoader::readMatlabLine(const std::string &line, ParticleTypeMap &event) {
+    std::istringstream stream(line);
+    Particle particle{};
+    stream >> particle.pdg >> particle.px >> particle.py >> particle.pz >>
+            particle.mass >> particle.x >> particle.y >> particle.z >>
+            particle.freeze_out_time;
+
+    if (!stream.fail()) {
+        particle.t = particle.freeze_out_time;
+        particle.p0 =
+                std::sqrt(particle.px * particle.px + particle.py * particle.py +
+                          particle.pz * particle.pz + particle.mass * particle.mass);
+        particle.probability = 1.0;
+        particle.charge      = 0;
+        event[particle.pdg].push_back(particle);
+    } else {
+        throw std::runtime_error("Failed to parse line: " + line);
+    }
+}
+void Coal::FileLoader::readMusicLine(const std::string &line, ParticleTypeMap &event) {
+    std::istringstream stream(line);
+    Particle particle{};
+    stream >> particle.pdg >> particle.charge >> particle.mass >>
+            particle.freeze_out_time >> particle.x >> particle.y >> particle.z >>
+            particle.p0 >> particle.px >> particle.py >> particle.pz;
+    if (!stream.fail()) {
+        particle.t           = particle.freeze_out_time;
+        particle.probability = 1.0;
+        event[particle.pdg].push_back(particle);
+    } else {
+        throw std::runtime_error("Failed to parse line: " + line);
+    }
+}
+void Coal::FileLoader::readMusicFile(const std::string &filename, EventsMap &allEvents) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("Unable to open file: " + filename);
+    }
+
+    std::string line;
+    ParticleTypeMap currentEvent;
+    int currentEventID = 0;
+    while (std::getline(file, line)) {
+        int particleCount;
+        std::istringstream countLine(line);
+        countLine >> particleCount;
+
+        std::getline(file, line);
+
+        currentEvent.clear();
+        for (int i = 0; i < particleCount; ++i) {
+            if (!std::getline(file, line)) {
+                throw std::runtime_error(
+                        "Unexpected end of file while reading event data.");
+            }
+            readMusicLine(line, currentEvent);
+        }
+        allEvents[++currentEventID] = currentEvent;
+    }
+}
+void Coal::FileLoader::readMusicFileCustom(const std::string &filename,
+                                           EventsMap &allEvents) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("Unable to open file: " + filename);
+    }
+
+    std::string line;
+    ParticleTypeMap currentEvent;
+    int lastEventID = -1;
+    int currentEventID;
+
+    while (std::getline(file, line)) {
+        std::istringstream iss(line);
+        std::string firstToken;
+        iss >> firstToken;
+        if (iss.eof() && std::ranges::all_of(firstToken, ::isdigit)) {
+            currentEventID = std::stoi(firstToken);
+            if (lastEventID != -1) {
+                allEvents[lastEventID] = currentEvent;
+                currentEvent.clear();
+            }
+            lastEventID = currentEventID;
+        } else {
+            readMusicLine(line, currentEvent);
+        }
+    }
+
+    if (!currentEvent.empty()) {
+        allEvents[lastEventID] = currentEvent;
+    }
+}
+void Coal::FileLoader::readMatlabFile(const std::string &filename, EventsMap &allEvents) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("Unable to open file: " + filename);
+    }
+
+    std::string line;
+    ParticleTypeMap currentEvent;
+    int currentEventID = 0;
+
+    while (std::getline(file, line)) {
+        if (line.substr(0, 5) == "event") {
+            if (!currentEvent.empty()) {
+                allEvents[currentEventID] = currentEvent;
+                currentEvent.clear();
+            }
+            std::istringstream eventHeader(line);
+            std::string eventLabel;
+            eventHeader >> eventLabel >> currentEventID;
+        } else if (!line.empty()) {
+            readMatlabLine(line, currentEvent);
+        }
+    }
+    if (!currentEvent.empty()) {
+        allEvents[currentEventID] = currentEvent;
+    }
 }
 
 void Coal::FileLoader::readSmashLine(const std::string &line, ParticleTypeMap &event) {
@@ -41,6 +164,7 @@ void Coal::FileLoader::readSmashLine(const std::string &line, ParticleTypeMap &e
 
     if (!stream.fail()) {
         particle.probability = 1.0;
+        particle.freeze_out_time = std::max(form_time,particle.freeze_out_time);
         particle.getFreezeOutPosition();
         event[particle.pdg].push_back(particle);
     } else {

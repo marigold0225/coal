@@ -35,7 +35,9 @@ set(LIB_SOURCE_FILES
         src/headers/ThreadPool.h
         src/cpp/ThreadPool.cpp
         src/cpp/ClusterCalculator.cpp
-        src/headers/logger.h)
+        src/headers/logger.h
+        src/headers/MatrixMethod.h
+        src/headers/ctpl.h)
 
 
 #find_package(TBB REQUIRED)
@@ -81,7 +83,7 @@ else ()
 endif ()
 
 # Google Test
-option(PACKAGE_TESTS "Build the tests" ON)
+option(PACKAGE_TESTS "Build the tests" OFF)
 if (PACKAGE_TESTS AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/googletest")
     add_subdirectory(googletest)
     include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
@@ -91,7 +93,7 @@ else ()
 endif ()
 
 # benchmark
-OPTION(BUILD_BENCHMARK "Builds the benchmark subproject" ON)
+OPTION(BUILD_BENCHMARK "Builds the benchmark subproject" OFF)
 if (BUILD_BENCHMARK)
     find_package(benchmark)
     if (benchmark_FOUND)
