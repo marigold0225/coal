@@ -2,11 +2,12 @@
 ### Example user template
 
 # IntelliJ project files
-/build-debug/
-/build-release/
-/output/
-/googletest/
-/benchmark/
-/3rdparty/
-/scripts/
+/build-debug/*
+/build-release/*
+/output/*
+/scripts/*
 .idea
+/build/*
+/benchmark/*
+/googletest/*
+/3rdparty/*

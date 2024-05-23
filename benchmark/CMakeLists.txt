@@ -3,9 +3,11 @@ cmake_minimum_required(VERSION 3.27)
 find_package(benchmark REQUIRED)
 
 set(BENCHMARK_SOURCES
-        #        benchmark_test.cpp
-                benchmark_lorentzMatrix.cpp)
+#        benchmark_test.cpp)
+#                benchmark_lorentzMatrix.cpp)
 #                benchmark_Jacobi.cpp)
+#        BM_vectorization.cpp)
+        benchmark_conditionSelect.cpp)
 #        benchmark_checkValidCombination.cpp)
 
 add_executable(benchmark_test ${BENCHMARK_SOURCES})

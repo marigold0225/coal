@@ -3,18 +3,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Global constants
-BASE_PATH = os.path.join('..', 'output', 'smash')
+BASE_PATH = os.path.join('..', 'output')
 RAPIDITY_MULTIPLIERS = {
     '-0.1<y<0': 1, '-0.2<y<-0.1': 1.5, '-0.3<y<-0.2': 2.0, '-0.4<y<-0.3': 2.5
 }
 SCALING_FACTORS = {
     'p': 1, 'd': 2, 'he4': 4, 'be8': 8
 }
+RAPIDITY_RANGES = ['-0.1<y<0', '-0.2<y<-0.1', '-0.3<y<-0.2', '-0.4<y<-0.3']
 legend_labels = {'exp': False, 'sim': False}
 particle_configs = {
     'p': {
         'xlim_pt': [0.0, 6.0],
-        'xlim_v1': [0.0, 2.5],
+        'xlim_v1': [0.0, 2.0],
         'xlim_v2': [0.0, 2.0],
         'ylim_v1': [-1.6, 0.1],
         'ylim_v2': [-1.6, 0.1],
@@ -25,13 +26,14 @@ particle_configs = {
         'file_exp_v2_over_y': 'v2_over_y.dat',
         'label': 'p',
         'title': 'v1_AuAu_p_r.jpg',
-        'n_folders': 500,
+        'folder_path': 'smash',
+        'n_folders': 139,
         'output_file': 'v1_proton_sim.dat',
     },
     'd': {
         'xlim_pt': [0.0, 6.0],
         'xlim_v1': [0.0, 1.7],
-        'xlim_v2': [0.0, 2.0],
+        'xlim_v2': [0.0, 1.7],
         'ylim_v1': [-1.6, 0.1],
         'ylim_v2': [-1.6, 0.1],
         'file_prefix': 'Deuteron_flow.dat',
@@ -41,13 +43,14 @@ particle_configs = {
         'file_exp_v2_over_y': 'v2_over_y.dat',
         'label': 'd',
         'title': 'v1_AuAu_d_r.jpg',
-        'n_folders': 500,
+        'folder_path': 'smash',
+        'n_folders': 139,
         'output_file': 'v1_deuteron_sim.dat',
     },
     'he4': {
         'xlim_pt': [0.0, 6.0],
         'xlim_v1': [0.0, 1.0],
-        'xlim_v2': [0.0, 2.0],
+        'xlim_v2': [0.0, 0.8],
         'ylim_v1': [-1.6, 0.1],
         'ylim_v2': [-1.6, 0.1],
         'file_prefix': 'Helium4_flow.dat',
@@ -57,12 +60,13 @@ particle_configs = {
         'file_exp_v2_over_y': 'v2_over_y.dat',
         'label': '$^4$He',
         'title': 'v1_AuAu_he4_r.jpg',
-        'n_folders': 160,
+        'folder_path': 'smash',
+        'n_folders': 139,
         'output_file': 'v1_he4_sim.dat',
     },
     'be8': {
         'xlim_pt': [0.0, 6.0],
-        'xlim_v1': [0.0, 0.5],
+        'xlim_v1': [0.0, 1.0],
         'xlim_v2': [0.0, 2.0],
         'ylim_v1': [-1.6, 0.1],
         'ylim_v2': [-1.6, 0.1],
@@ -73,7 +77,8 @@ particle_configs = {
         # 'file_exp_v2_over_y': 'v2_over_y.dat',
         'label': '$^8$Be',
         'title': 'v1_AuAu_be8_r.jpg',
-        'n_folders': 1,
+        'folder_path': 'Be',
+        'n_folders': 20,
         'output_file': 'v1_be8_sim.dat',
     },
 }
@@ -122,13 +127,13 @@ def load_exp_flow_over_y(particle, filepath):
     return exp_data
 
 
-def load_simulation_data(base_path, n_folders, filename, column_index):
+def load_simulation_data(base_path, folders_path, n_folders, filename, column_index):
     column_map = {
         'yield': 1, 'v1': 2, 'v2': 3, 'v1_over_y': 'v1', 'v2_over_y': 'v2'
     }
     data_by_rapidity = {}
     for i in range(n_folders):
-        folder_path = os.path.join(base_path, str(i))
+        folder_path = os.path.join(base_path, folders_path, str(i))
         file_path = os.path.join(folder_path, filename)
 
         if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
@@ -205,39 +210,39 @@ def process_data(data_by_rapidity):
 def plot_flow(stats_by_rapidity, experimental_data, n_folders, plot_xlim,
               particle_color, particle_i, label):
     for rapidity_range, stats in stats_by_rapidity.items():
-        # if rapidity_range in experimental_data:
-        multiplier = RAPIDITY_MULTIPLIERS[rapidity_range]
-        pts = np.array(
-            [pt / SCALING_FACTORS[particle_i] for pt in list(stats.keys())])
-        means = np.array(
-            [mean * multiplier / SCALING_FACTORS[particle_i] for mean, _ in
-             stats.values()])
-        variance = np.array([variance for _, variance in stats.values()])
-        std_devs = np.sqrt(variance) / np.sqrt(n_folders) * multiplier
-        pts_filtered, means_filtered = zip(*[(pt, mean) for
-                                             pt, mean in zip(pts, means)
-                                             if plot_xlim[0] <= pt <=
-                                             plot_xlim[1]])
-        std_devs = np.array([std_dev for pt, std_dev in zip(pts, std_devs)
-                             if plot_xlim[0] <= pt <= plot_xlim[1]])
-        if not legend_labels['sim']:
-            plt.errorbar(pts_filtered, means_filtered, yerr=std_devs,
-                         fmt='o',
-                         label='Sim',
-                         color=particle_color, capsize=5, markersize=8)
-            means_upper = means_filtered + std_devs
-            means_lower = means_filtered - std_devs
-            plt.fill_between(pts_filtered, means_lower, means_upper,
-                             color=particle_color, alpha=0.5)
-            legend_labels['sim'] = True
-        else:
-            plt.errorbar(pts_filtered, means_filtered, yerr=std_devs,
-                         fmt='o',
-                         color=particle_color, capsize=5, markersize=8)
-            means_upper = means_filtered + std_devs
-            means_lower = means_filtered - std_devs
-            plt.fill_between(pts_filtered, means_lower, means_upper,
-                             color=particle_color, alpha=0.5)
+        if rapidity_range in RAPIDITY_RANGES:
+            multiplier = RAPIDITY_MULTIPLIERS[rapidity_range]
+            pts = np.array(
+                [pt / SCALING_FACTORS[particle_i] for pt in list(stats.keys())])
+            means = np.array(
+                [mean * multiplier / SCALING_FACTORS[particle_i] for mean, _ in
+                 stats.values()])
+            variance = np.array([variance for _, variance in stats.values()])
+            std_devs = np.sqrt(variance) / np.sqrt(n_folders) * multiplier
+            pts_filtered, means_filtered = zip(*[(pt, mean) for
+                                                 pt, mean in zip(pts, means)
+                                                 if plot_xlim[0] <= pt <=
+                                                 plot_xlim[1]])
+            std_devs = np.array([std_dev for pt, std_dev in zip(pts, std_devs)
+                                 if plot_xlim[0] <= pt <= plot_xlim[1]])
+            if not legend_labels['sim']:
+                plt.errorbar(pts_filtered, means_filtered, yerr=std_devs,
+                             fmt='o',
+                             label='Sim',
+                             color=particle_color, capsize=5, markersize=8)
+                means_upper = means_filtered + std_devs
+                means_lower = means_filtered - std_devs
+                plt.fill_between(pts_filtered, means_lower, means_upper,
+                                 color=particle_color, alpha=0.5)
+                legend_labels['sim'] = True
+            else:
+                plt.errorbar(pts_filtered, means_filtered, yerr=std_devs,
+                             fmt='o',
+                             color=particle_color, capsize=5, markersize=8)
+                means_upper = means_filtered + std_devs
+                means_lower = means_filtered - std_devs
+                plt.fill_between(pts_filtered, means_lower, means_upper,
+                                 color=particle_color, alpha=0.5)
 
     if experimental_data:
         for rapidity_range, data in experimental_data.items():
@@ -298,22 +303,24 @@ def flow_over_y(particles, plot_type):
                                                 config[exp_data_key])
             except FileNotFoundError:
                 print(f"File not found: {config[f'{plot_type}.dat']}")
-        simulation_data = load_simulation_data(BASE_PATH, config['n_folders'],
+        simulation_data = load_simulation_data(BASE_PATH,
+                                               config['folder_path'],
+                                               config['n_folders'],
                                                config['file_prefix'],
                                                plot_type)
         plot_flow_over_y(particle_i, simulation_data, exp_data,
                          config['n_folders'],
                          particle_colors[particle_i], config['label'])
 
-    for particle, color in particle_colors.items():
-        plt.scatter([], [], color=color,
+    for particle in particles:
+        plt.scatter([], [], color=particle_colors[particle],
                     label=particle_configs[particle]['label'],
                     marker='o', s=100)
     plt.title('AuAu 3GeV ($v_1$ vs $y$) 10%-40%', fontsize=28)
-    plt.xlabel('Rapidity (y)', fontsize=28)
+    plt.xlabel('y', fontsize=28)
     plt.ylabel('$v_1$', fontsize=28)
     plt.xlim(-0.5, 0.0)
-    # plt.ylim(-0.6, 0.05)
+    # plt.ylim(-0.8, 0.05)
     plt.ylim(-0.05, 0.2)
     plt.grid(True)
     plt.legend(fontsize=16)
@@ -336,7 +343,9 @@ def flow(particles, plot_type):
                 exp_data = load_exp_flow_data(exp_data_path)
             except FileNotFoundError:
                 print(f"File not found: {exp_data_path}")
-        simulation_data = load_simulation_data(BASE_PATH, config['n_folders'],
+        simulation_data = load_simulation_data(BASE_PATH,
+                                               config['folder_path'],
+                                               config['n_folders'],
                                                config['file_prefix'],
                                                plot_type)
         stats_by_rapidity = process_data(simulation_data)
@@ -344,8 +353,8 @@ def flow(particles, plot_type):
                   config[f'xlim_{plot_type}'],
                   particle_colors[particle_i], particle_i, config['label'])
 
-    for particle, color in particle_colors.items():
-        plt.scatter([], [], color=color,
+    for particle in particles:
+        plt.scatter([], [], color=particle_colors[particle],
                     label=particle_configs[particle]['label'],
                     marker='o', s=100)
     plt.title('AuAu 3GeV ($v_1$ vs $p_T$) 10%-40%', fontsize=28)
@@ -361,9 +370,8 @@ def flow(particles, plot_type):
     plt.text(2.0, -0.15, '-0.2<y<-0.1 (* 1.5)', fontsize=18)
     plt.text(2.0, -0.3, '-0.3<y<-0.2 (* 2.0)', fontsize=18)
     plt.text(2.0, -0.5, '-0.4<y<-0.3 (* 2.5)', fontsize=18)
-    plt.savefig(f'{plot_type}.jpg')
+    plt.savefig(f'{plot_type}_between.jpg')
     plt.show()
 
-
-flow(['p', 'd', 'he4', 'be8'], 'v1')
-# flow_over_y(['p', 'd', 'he4'], 'v2_over_y')
+flow(['p', 'd', 'he4'], 'v1')
+# flow_over_y(['p', 'd', 'he4', 'be8'], 'v1_over_y')

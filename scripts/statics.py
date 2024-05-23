@@ -2,30 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-base_path = os.path.join('..', 'output', 'smash')
-
-rapidity_multipliers = {
-    '-0.1<y<0': 1,
-    '-0.2<y<-0.1': 1.5,
-    '-0.3<y<-0.2': 2.0,
-    '-0.4<y<-0.3': 2.5,
-}
-rapidity_multipliers_pt = {
-    '-0.1<y<0': 0.1,
-    '-0.2<y<-0.1': 0.01,
-    '-0.3<y<-0.2': 0.001,
-    '-0.4<y<-0.3': 0.0001,
-}
-# rapidity_ranges = ['-0.1<y<0', '-0.2<y<-0.1', '-0.3<y<-0.2',
-#                    '-0.4<y<-0.3']
-scaling_factors = {
-    'p': 1,
-    'd': 2,
-    # # 'he3': 3,
-    'he4': 4,
-    # 'Be8': 8,
-    # 'C12': 12,
-}
+base_path = os.path.join('..', 'output')
 # 粒子配置字典
 particle_configs = {
     'p': {
@@ -37,6 +14,7 @@ particle_configs = {
         'file_exp_v2': 'v2_proton.dat',
         'label': r'p',
         'title': 'v1_AuAu_p_r.jpg',
+        'folder_path': 'smash',
         'n_folders': 500,
         'output_file': 'v1_proton_sim.dat',
     },
@@ -49,18 +27,10 @@ particle_configs = {
         'file_exp_v2': 'v2_d.dat',
         'label': r'd',
         'title': 'v1_AuAu_d_r.jpg',
+        'folder_path': 'smash',
         'n_folders': 500,
         'output_file': 'v1_deuteron_sim.dat',
     },
-    # 'he3': {
-    #     'xlim': [0.0, 6.0],
-    #     'plot_xlim': [0.4, 1.7],
-    #     'ylim': [-1.6, 0.1],
-    #     'file_prefix': 'Helium3_flow.dat',
-    #     'file_exp': 'v1_he3.dat',
-    #     'label': r'$^3$He',
-    #     'title': 'v1_AuAu_he3_r.jpg',
-    # },
     'he4': {
         'xlim': [0.0, 6.0],
         'plot_xlim': [0.0, 1.0],
@@ -70,28 +40,10 @@ particle_configs = {
         'file_exp_v2': 'v2_he4.dat',
         'label': r'$^4$He',
         'title': 'v1_AuAu_he4_r.jpg',
+        'folder_path': 'smash',
         'n_folders': 160,
         'output_file': 'v1_he4_sim.dat',
     },
-    # 'Be8': {
-    #     'xlim': [0.0, 8.0],
-    #     'plot_xlim': [0.4, 1.7],
-    #     'ylim': [-1.6, 0.1],
-    #     'file_prefix': 'Be8_flow.dat',
-    #     'file_exp_v1': 'v1_Be8.dat',
-    #     'file_exp_v2': 'v2_Be8.dat',
-    #     'label': r'$^8$Be',
-    #     'title': 'v1_AuAu_be8_r.jpg',
-    # },
-    # 'C12': {
-    #     'xlim': [0.0, 12.0],
-    #     'plot_xlim': [0.4, 1.7],
-    #     'ylim': [-1.6, 0.1],
-    #     'file_prefix': 'C12_flow.dat',
-    #     'file_exp': 'v1_C12.dat',
-    #     'label': r'$^{12}$C',
-    #     'title': 'v1_AuAu_C12_r.jpg',
-    # },
 }
 
 color_list = ['red', 'black', 'blue', 'green', 'purple', 'orange']
