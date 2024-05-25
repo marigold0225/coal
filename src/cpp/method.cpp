@@ -96,6 +96,7 @@ void Coal::boostToComMatrix(Eigen::Matrix<double, Eigen::Dynamic, 11> &particles
     lorenzBoostMatrix(particles, beta_x, beta_y, beta_z);
 
     const double t_max = particles.col(9).maxCoeff();
+
     for (int i = 0; i < particles.rows(); ++i) {
         particles(i, 6) += (t_max - particles(i, 9)) * particles(i, 1) / particles(i, 5);
         particles(i, 7) += (t_max - particles(i, 9)) * particles(i, 2) / particles(i, 5);

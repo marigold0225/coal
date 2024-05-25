@@ -2,6 +2,8 @@
 // Created by mafu on 4/2/2024.
 //
 #pragma once
+
+// #define EIGEN_USE_MKL_ALL
 #include "shortcut.h"
 #include <yaml-cpp/yaml.h>
 #include <Eigen/Dense>
@@ -33,6 +35,8 @@ namespace Coal {
         bool Fixed;
         std::vector<double> MassArray;
         std::vector<double> SigArray;
+        std::vector<double> Sig_inv_sq;
+        std::vector<double> Sig_sq_hbar2;
         std::vector<int> PDGArray;
         double probabilityCut;
         RapidityArray originRapidity;

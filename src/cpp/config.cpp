@@ -2,7 +2,6 @@
 // Created by mafu on 4/2/2024.
 //
 #include "../headers/config.h"
-
 #include <iostream>
 #include <numeric>
 
@@ -48,11 +47,17 @@ Coal::ClusterParams::ClusterParams(const YAML::Node &node) {
     }
     // MassArray      = node["MassArray"].as<std::vector<double>>();
     SigArray       = node["Sig"].as<std::vector<double>>();
+
+    for (const auto &sig: SigArray) {
+        Sig_inv_sq.push_back(1.0 / (sig * sig));
+        Sig_sq_hbar2.push_back(sig * sig / 0.038937932300073023);
+    }
+
     PDGArray       = node["From"].as<std::vector<int>>();
     ptBins         = node["Pt"].as<std::pair<double, int>>();
     originRapidity = node["RapidityCut"].as<RapidityArray>();
     targetRapidity = node["TargetRapidity"].as<RapidityRange>();
-    setMassArray(MassArray);
+    // setMassArray(MassArray);
 }
 
 void Coal::ClusterParams::setMassArray(const std::vector<double> &massArray) {

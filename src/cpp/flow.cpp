@@ -2,7 +2,6 @@
 // Created by mafu on 24-3-26.
 //
 #include "../headers/flow.h"
-#include "gsl/gsl_sf_bessel.h"
 #include <fstream>
 #include <iostream>
 #include <ranges>
@@ -22,65 +21,104 @@ Coal::flowResult::flowResult(const RapidityArray &rapidityArray, const int bins)
     }
 }
 
-int Coal::eventPlaneEquation(const gsl_vector *x, void *p, gsl_vector *f) {
-    const params *params = static_cast<struct params *>(p);
-    const double a       = params->a;
-    const int k          = params->k;
-    const double x_val   = gsl_vector_get(x, 0);
-    const double arg     = x_val * x_val / 4;
+// int Coal::eventPlaneEquation(const gsl_vector *x, void *p, gsl_vector *f) {
+//     const params *params = static_cast<struct params *>(p);
+//     const double a       = params->a;
+//     const int k          = params->k;
+//     const double x_val   = gsl_vector_get(x, 0);
+//     const double arg     = x_val * x_val / 4;
+//
+//     const double I_k_minus_1_over_2 = gsl_sf_bessel_Inu((k - 1) / 2.0, arg);
+//     // const double I = std::cyl_bessel_i()
+//     const double I_k_plus_1_over_2 = gsl_sf_bessel_Inu((k + 1) / 2.0, arg);
+//
+//     const double y = M_PI / 2 / sqrt(2) * x_val * exp(-arg) *
+//                              (I_k_minus_1_over_2 + I_k_plus_1_over_2) -
+//                      a;
+//
+//     gsl_vector_set(f, 0, y);
+//     return GSL_SUCCESS;
+// }
+int Coal::eventPlaneEquation_std(const double x_val, const params *p, double &y) {
+    const double a   = p->a;
+    const int k      = p->k;
+    const double arg = x_val * x_val / 4;
 
-    const double I_k_minus_1_over_2 = gsl_sf_bessel_Inu((k - 1) / 2.0, arg);
-    const double I_k_plus_1_over_2  = gsl_sf_bessel_Inu((k + 1) / 2.0, arg);
+    const double I_k_minus_1_over_2 = std::cyl_bessel_i((k - 1) / 2.0, arg);
+    const double I_k_plus_1_over_2  = std::cyl_bessel_i((k + 1) / 2.0, arg);
 
-    const double y = M_PI / 2 / sqrt(2) * x_val * exp(-arg) *
-                             (I_k_minus_1_over_2 + I_k_plus_1_over_2) -
-                     a;
-
-    gsl_vector_set(f, 0, y);
-    return GSL_SUCCESS;
+    y = M_PI / 2 / sqrt(2) * x_val * exp(-arg) *
+                (I_k_minus_1_over_2 + I_k_plus_1_over_2) -
+        a;
+    return 0;
 }
-double Coal::solveEquation(const double a, const int k) {
-    const gsl_multiroot_fsolver_type *T = gsl_multiroot_fsolver_hybrids;
-    gsl_multiroot_fsolver *s            = gsl_multiroot_fsolver_alloc(T, 1);
-
-    params par                  = {a, k};
-    gsl_multiroot_function func = {&eventPlaneEquation, 1, &par};
-
-    constexpr double x_init[1] = {0.5};
-    gsl_vector *x              = gsl_vector_alloc(1);
-    gsl_vector_set(x, 0, x_init[0]);
-
-    gsl_multiroot_fsolver_set(s, &func, x);
-
-    int status, iter = 0;
-    do {
-        iter++;
-        status = gsl_multiroot_fsolver_iterate(s);
-        if (status)
+// double Coal::solveEquation(const double a, const int k) {
+//     const gsl_multiroot_fsolver_type *T = gsl_multiroot_fsolver_hybrids;
+//     gsl_multiroot_fsolver *s            = gsl_multiroot_fsolver_alloc(T, 1);
+//
+//     params par                  = {a, k};
+//     gsl_multiroot_function func = {&eventPlaneEquation, 1, &par};
+//
+//     constexpr double x_init[1] = {0.5};
+//     gsl_vector *x              = gsl_vector_alloc(1);
+//     gsl_vector_set(x, 0, x_init[0]);
+//
+//     gsl_multiroot_fsolver_set(s, &func, x);
+//
+//     int status, iter = 0;
+//     do {
+//         iter++;
+//         status = gsl_multiroot_fsolver_iterate(s);
+//         if (status)
+//             break;
+//
+//         status = gsl_multiroot_test_residual(s->f, 1e-7);
+//     } while (status == GSL_CONTINUE && iter < 1000);
+//
+//     const double root = gsl_vector_get(s->x, 0);
+//     gsl_multiroot_fsolver_free(s);
+//     gsl_vector_free(x);
+//
+//     return root;
+// }
+double Coal::solveEquation_std(const double a, const int k) {
+    const params par       = {a, k};
+    double x               = 0.5;
+    constexpr int max_iter = 1000;
+    for (int iter = 0; iter < max_iter; ++iter) {
+        double y;
+        eventPlaneEquation_std(x, &par, y);
+        if (constexpr double tol = 1e-7; std::abs(y) < tol)
             break;
-
-        status = gsl_multiroot_test_residual(s->f, 1e-7);
-    } while (status == GSL_CONTINUE && iter < 1000);
-
-    const double root = gsl_vector_get(s->x, 0);
-    gsl_multiroot_fsolver_free(s);
-    gsl_vector_free(x);
-
-    return root;
+        constexpr double h = 1e-5;
+        double y1, y2;
+        eventPlaneEquation_std(x + h, &par, y1);
+        eventPlaneEquation_std(x - h, &par, y2);
+        const double dy = (y1 - y2) / (2 * h);
+        x -= y / dy;
+    }
+    return x;
 }
-double Coal::getRef(const double x, const int k) {
+// double Coal::getRef(const double x, const int k) {
+//     const double arg                = x * x / 4;
+//     const double I_k_minus_1_over_2 = gsl_sf_bessel_Inu((k - 1) / 2.0, arg);
+//     const double I_k_plus_1_over_2  = gsl_sf_bessel_Inu((k + 1) / 2.0, arg);
+//     return M_PI / 2 / sqrt(2) * x * std::exp(-arg) *
+//            (I_k_minus_1_over_2 + I_k_plus_1_over_2);
+// }
+double Coal::getRef_std(const double x, const int k) {
     const double arg                = x * x / 4;
-    const double I_k_minus_1_over_2 = gsl_sf_bessel_Inu((k - 1) / 2.0, arg);
-    const double I_k_plus_1_over_2  = gsl_sf_bessel_Inu((k + 1) / 2.0, arg);
+    const double I_k_minus_1_over_2 = std::cyl_bessel_i((k - 1) / 2.0, arg);
+    const double I_k_plus_1_over_2  = std::cyl_bessel_i((k + 1) / 2.0, arg);
     return M_PI / 2 / sqrt(2) * x * std::exp(-arg) *
            (I_k_minus_1_over_2 + I_k_plus_1_over_2);
 }
 
 double Coal::Psi(const double y, const double x) {
     double angle = atan2(y, x);
-    // if (angle < 0) {
-    //     angle += 2 * M_PI;
-    // }
+    if (angle < 0) {
+        angle += 2 * M_PI;
+    }
     return angle;
 }
 
@@ -99,10 +137,10 @@ Coal::ResParams Coal::getResolution(const ParticleEventMap &OneEvent, const int 
     for (const auto &particles: OneEvent | std::views::values) {
         for (const auto &particle: particles) {
             const double pseudoRapidity = particle.getPseudoRapidity();
-            const double rapidity       = particle.getRapidity();
-            const double pT             = particle.getPT();
-            const double Phi            = particle.getPhi();
-
+            // const double rapidity       = particle.getRapidity();
+            const double pT  = particle.getPT();
+            // const double Phi = particle.getPhi();
+            const double Phi = Psi(particle.py, particle.px);
             // if (pseudoRapidity > 2.81 && pseudoRapidity < 5.39) {
             //     Q_x += pT * std::cos(Phi);
             //     Q_y += pT * std::sin(Phi);
@@ -252,8 +290,9 @@ Coal::flowResult Coal::calculateFlow(const EventsMap &allEvents, const int pdg,
                 for (const auto &particle: particles) {
                     const double rapidity = particle.getRapidity();
                     // const double rapidity = particle.getPseudoRapidity();
-                    const double pT       = particle.getPT();
-                    const double Phi      = particle.getPhi();
+                    const double pT  = particle.getPT();
+                    // const double Phi = particle.getPhi();
+                    const double Phi = Psi(particle.py,particle.px);
                     // constexpr double Psi  = 0.0;
                     const double Psi = resolution.eventPlaneMap.at(eventId);
 

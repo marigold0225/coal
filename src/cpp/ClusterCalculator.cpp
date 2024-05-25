@@ -5,9 +5,8 @@
 #include "../headers/MatrixMethod.h"
 #include "../headers/ThreadPool.h"
 #include "../headers/chrono.h"
-#include "../headers/logger.h"
 #include "../headers/ctpl.h"
-
+#include "../headers/logger.h"
 #include <numeric>
 
 
@@ -140,8 +139,8 @@ Eigen::MatrixXd Coal::ClusterCalculator::processEventsV2(const EventsMap &allEve
     std::vector<int> eventIDList;
     std::ranges::transform(allEvents, std::back_inserter(eventIDList),
                            [](const auto &pair) { return pair.first; });
-    const auto logger     = Logger::getInstance().get();
-    long current_row      = 0;
+    const auto logger = Logger::getInstance().get();
+    long current_row  = 0;
 
     const auto start_time = SystemClock::now();
 
@@ -152,13 +151,14 @@ Eigen::MatrixXd Coal::ClusterCalculator::processEventsV2(const EventsMap &allEve
             continue;
         }
         const auto result = mainLoopV1(subCell, params, num_threads);
-        if (const long newRequiredSize = current_row + result.rows();
-            newRequiredSize > targetParticles.rows()) {
-            constexpr long resize_size = 100000;
-            targetParticles.conservativeResize(newRequiredSize + resize_size, 11);
-        }
-        targetParticles.block(current_row, 0, result.rows(), 11) = result;
-        current_row += result.rows();
+        // if (const long newRequiredSize = current_row + result.rows();
+        //     newRequiredSize > targetParticles.rows()) {
+        //     constexpr long resize_size = 100000;
+        //     targetParticles.conservativeResize(newRequiredSize + resize_size, 11);
+        // }
+        // targetParticles.block(current_row, 0, result.rows(), 11) = result;
+        // current_row += result.rows();
+        appendMatrixToBottom(result, targetParticles, current_row);
         logger->info("loop: {} size: {}", i, result.rows());
     }
 
@@ -173,8 +173,8 @@ auto Coal::ClusterCalculator::getjobRange(const int total_size, const int num_th
                                           const int thread_id) -> std::pair<int, int> {
     const int base_load = total_size / num_threads;
     const int remainder = total_size % num_threads;
-    int start_index = thread_id * base_load + std::min(thread_id, remainder);
-    int end_index = start_index + base_load + (thread_id < remainder ? 1 : 0);
+    int start_index     = thread_id * base_load + std::min(thread_id, remainder);
+    int end_index       = start_index + base_load + (thread_id < remainder ? 1 : 0);
     return {start_index, end_index};
 }
 
@@ -262,13 +262,13 @@ Coal::ClusterCalculator::mainLoop(const std::vector<Eigen::MatrixXd> &MArray,
                           + (size_last * 11)  //targetparticles
                           + (size_last * 4)   //beta_x, beta_y, beta_z, diff
                           + (size_last * (N - 1) * 2);
-    std::vector<double,Eigen::aligned_allocator<double>> memPool(MAX_SIZE, 0.0);
+    std::vector<double, Eigen::aligned_allocator<double>> memPool(MAX_SIZE, 0.0);
     const auto memPtr = memPool.data();
     MatrixMemPool tempMatrixs(memPtr, size_last, N);
 
     const auto logger = Logger::getInstance().get();
     std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>>
-           lorentzMatrixs(size_last, Eigen::Matrix4d::Zero());
+            lorentzMatrixs(size_last, Eigen::Matrix4d::Zero());
     std::vector counts(N, 0);
     std::vector maxIndex(N, 0);
     for (auto i = 0; i < N; ++i) {
@@ -307,7 +307,8 @@ Coal::ClusterCalculator::mainLoop(const std::vector<Eigen::MatrixXd> &MArray,
             vectorizationWithLastArray(params, tempMatrixs, lorentzMatrixs);
             yieldAll += tempMatrixs.targetParticles.col(10).sum();
 
-            conditionSelect(tempMatrixs.targetParticles, params.probabilityCut, matrixSwap);
+            conditionSelect(tempMatrixs.targetParticles, params.probabilityCut,
+                            matrixSwap);
             appendMatrixToBottom(matrixSwap, result, current_row);
 
             multiIndex = jumpValidLoop(multiIndex, counts, N - 3);
@@ -351,9 +352,9 @@ Coal::ClusterCalculator::mainLoopV1(const std::vector<Eigen::MatrixXd> &MArray,
         pool.enqueueTask([&, start_index, end_index, i]() {
             mainLoopV2(MArray, params, start_index, end_index, threadOutputs[i],
                        usedRows[i]);
-        //  pool.push([&, start_index, end_index, i](int) {
-        //     mainLoopV2(MArray, params, start_index, end_index, threadOutputs[i],
-        //                usedRows[i]);
+            //  pool.push([&, start_index, end_index, i](int) {
+            //     mainLoopV2(MArray, params, start_index, end_index, threadOutputs[i],
+            //                usedRows[i]);
         });
     }
     pool.stop();
@@ -390,15 +391,15 @@ void Coal::ClusterCalculator::mainLoopV2(const std::vector<Eigen::MatrixXd> &MAr
                           + (size_last * 11)  //targetparticles
                           + (size_last * 4)   //beta_x, beta_y, beta_z, diff
                           + (size_last * (N - 1) * 2);
-    std::vector<double,Eigen::aligned_allocator<double>> memPool(MAX_SIZE, 0.0);
+    std::vector<double, Eigen::aligned_allocator<double>> memPool(MAX_SIZE, 0.0);
     const auto memPtr = memPool.data();
     MatrixMemPool tempMatrixs(memPtr, size_last, N);
 
     std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>>
-           lorentzMatrixs(size_last, Eigen::Matrix4d::Zero());
+            lorentzMatrixs(size_last, Eigen::Matrix4d::Zero());
     std::unordered_map<std::string, double> distance_cache;
-    double yieldAll    = 0.0;
-    long long loop     = 0;
+    double yieldAll = 0.0;
+    long long loop  = 0;
     std::vector multiIndex(N, 0);
     multiIndex[0] = start_idx;
     maxIndex[0]   = endidx - 1;
@@ -422,10 +423,11 @@ void Coal::ClusterCalculator::mainLoopV2(const std::vector<Eigen::MatrixXd> &MAr
             tempMatrixs.reset();
             matrixSwap.setZero();
             setMatrix(tempMatrixs, particles.topRows(N - 1), MArray[N - 1], params.pdg);
-            vectorizationWithLastArray(params, tempMatrixs,lorentzMatrixs);
+            vectorizationWithLastArray(params, tempMatrixs, lorentzMatrixs);
             yieldAll += tempMatrixs.targetParticles.col(10).sum();
             conditionSelect(tempMatrixs.targetParticles, params.probabilityCut, matrixSwap);
-            appendMatrixToBottom( matrixSwap,threadOutputs, usedRows);
+            // select(tempMatrixs.targetParticles, 10, params.probabilityCut, matrixSwap);
+            appendMatrixToBottom(matrixSwap, threadOutputs, usedRows);
             multiIndex = jumpValidLoop(multiIndex, counts, N - 3);
             if (multiIndex == maxIndex) {
                 break;
@@ -514,17 +516,15 @@ void Coal::ClusterCalculator::CheckingPortfolioValidity(
                 }
             }
 
-            Eigen::Matrix<double,Eigen::Dynamic,11> tempParticle = ParticlesList.topRows(i + 1);
+            Eigen::Matrix<double, Eigen::Dynamic, 11> tempParticle =
+                    ParticlesList.topRows(i + 1);
             boostToComMatrix(tempParticle);
 
             auto [diff_r, diff_p] = JacobiCoordinatesMatrix_Vec(tempParticle, params);
 
             for (auto j = 0; j < i; ++j) {
-                constexpr double hbar2 = 0.038937932300073023;
-                dis_temp +=
-                        (diff_r(j) * diff_r(j) / params.SigArray[j] / params.SigArray[j] +
-                         diff_p(j) * diff_p(j) * params.SigArray[j] * params.SigArray[j] /
-                                 hbar2);
+                dis_temp += (diff_r(j) * diff_r(j) * params.Sig_inv_sq[j] +
+                             diff_p(j) * diff_p(j) * params.Sig_sq_hbar2[j]);
             }
             distanceCache[key] = dis_temp;
         }
@@ -597,10 +597,10 @@ void Coal::ClusterCalculator::vectorizationWithLastArray(
     calculateLorentz(tempMatrixs.beta_x, tempMatrixs.beta_y, tempMatrixs.beta_z,
                      lorentzMatrixs);
 
-    applyLorentzBoost(tempMatrixs.combinedX, tempMatrixs.combinedY,
-                          tempMatrixs.combinedZ, tempMatrixs.combinedT,
-                          tempMatrixs.combinedPX, tempMatrixs.combinedPY,
-                          tempMatrixs.combinedPZ, tempMatrixs.combinedP0, lorentzMatrixs);
+    applyLorentzBoost(tempMatrixs.combinedX, tempMatrixs.combinedY, tempMatrixs.combinedZ,
+                      tempMatrixs.combinedT, tempMatrixs.combinedPX,
+                      tempMatrixs.combinedPY, tempMatrixs.combinedPZ,
+                      tempMatrixs.combinedP0, lorentzMatrixs);
     tempMatrixs.temReplicatedMaxCoeff =
             tempMatrixs.combinedT.rowwise()
                     .maxCoeff()
@@ -608,18 +608,24 @@ void Coal::ClusterCalculator::vectorizationWithLastArray(
                     .array() -
             tempMatrixs.combinedT.array();
 
-    tempMatrixs.combinedX = tempMatrixs.temReplicatedMaxCoeff.array() *
-                                    tempMatrixs.combinedPX.array() /
-                                    tempMatrixs.combinedP0.array() +
-                            tempMatrixs.combinedX.array();
-    tempMatrixs.combinedY = tempMatrixs.temReplicatedMaxCoeff.array() *
-                                    tempMatrixs.combinedPY.array() /
-                                    tempMatrixs.combinedP0.array() +
-                            tempMatrixs.combinedY.array();
-    tempMatrixs.combinedZ = tempMatrixs.temReplicatedMaxCoeff.array() *
-                                    tempMatrixs.combinedPZ.array() /
-                                    tempMatrixs.combinedP0.array() +
-                            tempMatrixs.combinedZ.array();
+    const auto commonFactor =
+            tempMatrixs.temReplicatedMaxCoeff.array() / tempMatrixs.combinedP0.array();
+
+    // tempMatrixs.combinedX = tempMatrixs.temReplicatedMaxCoeff.array() *
+    //                                 tempMatrixs.combinedPX.array() /
+    //                                 tempMatrixs.combinedP0.array() +
+    //                         tempMatrixs.combinedX.array();
+    // tempMatrixs.combinedY = tempMatrixs.temReplicatedMaxCoeff.array() *
+    //                                 tempMatrixs.combinedPY.array() /
+    //                                 tempMatrixs.combinedP0.array() +
+    //                         tempMatrixs.combinedY.array();
+    // tempMatrixs.combinedZ = tempMatrixs.temReplicatedMaxCoeff.array() *
+    //                                 tempMatrixs.combinedPZ.array() /
+    //                                 tempMatrixs.combinedP0.array() +
+    //                         tempMatrixs.combinedZ.array();
+    tempMatrixs.combinedX.array() += commonFactor * tempMatrixs.combinedPX.array();
+    tempMatrixs.combinedY.array() += commonFactor * tempMatrixs.combinedPY.array();
+    tempMatrixs.combinedZ.array() += commonFactor * tempMatrixs.combinedPZ.array();
 
     tempMatrixs.dr = ((params.M[N - 2] * tempMatrixs.combinedX.transpose())
                               .transpose()
@@ -655,12 +661,9 @@ void Coal::ClusterCalculator::vectorizationWithLastArray(
 
 
     for (auto i = 0; i < N - 1; ++i) {
-        constexpr double hbar2 = 0.038937932300073023;
-        tempMatrixs.diff +=
-                (tempMatrixs.dr.col(i).array() / params.SigArray[i] / params.SigArray[i] +
-                 tempMatrixs.dp.col(i).array() * params.SigArray[i] * params.SigArray[i] /
-                         hbar2)
-                        .matrix();
+        tempMatrixs.diff += (tempMatrixs.dr.col(i).array() * params.Sig_inv_sq[i] +
+                             tempMatrixs.dp.col(i).array() * params.Sig_sq_hbar2[i])
+                                    .matrix();
     }
     tempMatrixs.targetParticles.col(10) =
             params.gc * params.probFactor *

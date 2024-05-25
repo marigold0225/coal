@@ -37,7 +37,9 @@ set(LIB_SOURCE_FILES
         src/cpp/ClusterCalculator.cpp
         src/headers/logger.h
         src/headers/MatrixMethod.h
-        src/headers/ctpl.h)
+        src/headers/ctpl.h
+        src/headers/xmath.h
+        src/cpp/xmath.cpp)
 
 
 #find_package(TBB REQUIRED)
@@ -47,17 +49,16 @@ add_library(coal_lib STATIC ${LIB_SOURCE_FILES})
 # exec
 add_executable(${PROJECT_NAME} src/cpp/main.cpp)
 
+target_link_libraries(${PROJECT_NAME} coal_lib)
 #target_link_libraries(coal_lib TBB::tbb)
 
-target_link_libraries(${PROJECT_NAME} coal_lib)
-
 # GSL
-find_package(GSL REQUIRED)
-if (NOT GSL_FOUND)
-    message(FATAL_ERROR "GSL not found. Please specify the GSL installation path using -DGSL_DIR=<path> or -DCMAKE_PREFIX_PATH=<path>.")
-endif ()
-include_directories(${GSL_INCLUDE_DIRS})
-target_link_libraries(coal_lib ${GSL_LIBRARIES})
+#find_package(GSL REQUIRED)
+#if (NOT GSL_FOUND)
+#    message(FATAL_ERROR "GSL not found. Please specify the GSL installation path using -DGSL_DIR=<path> or -DCMAKE_PREFIX_PATH=<path>.")
+#endif ()
+#include_directories(${GSL_INCLUDE_DIRS})
+#target_link_libraries(coal_lib ${GSL_LIBRARIES})
 
 # spdlog
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/spdlog")
@@ -81,6 +82,15 @@ if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/eigen-3.4.0")
 else ()
     message(FATAL_ERROR "Eigen directory not found in 3rdparty. Please download Eigen from https://gitlab.com/libeigen/eigen/-/releases/3.4.0 and extract it to ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/eigen-3.4.0")
 endif ()
+
+
+# MKL
+#include_directories(/home/mafu/intel/oneapi/mkl/latest/include)
+#link_directories(/home/mafu/intel/oneapi/mkl/2024.1/lib /home/mafu/intel/oneapi/compiler/latest/lib)
+#target_link_libraries(coal_lib
+#        /home/mafu/intel/oneapi/mkl/2024.1/lib/libmkl_rt.so
+#)
+
 
 # Google Test
 option(PACKAGE_TESTS "Build the tests" OFF)

@@ -3,8 +3,8 @@
 //
 #pragma once
 #include "config.h"
-#include "gsl/gsl_multiroots.h"
-
+// #include "gsl/gsl_multiroots.h"
+// #include "gsl/gsl_sf_bessel.h"
 namespace Coal {
 
     struct params {
@@ -52,12 +52,14 @@ namespace Coal {
         explicit flowResult(const RapidityArray &rapidityArray,int bins);
     };
 
-    int eventPlaneEquation(const gsl_vector *x, void *p, gsl_vector *f);
+    // int eventPlaneEquation(const gsl_vector *x, void *p, gsl_vector *f);
+    int eventPlaneEquation_std(double x_val, const params *p, double &y);
 
-    double solveEquation(double a, int k);
+    // double solveEquation(double a, int k);
+    double solveEquation_std(double a, int k);
 
-    double getRef(double x, int k);
-
+    // double getRef(double x, int k);
+    double getRef_std(double x, int k);
     double Psi(double y, double x);
 
     ResParams getResolution(const ParticleEventMap &OneEvent, int N);

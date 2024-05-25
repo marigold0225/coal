@@ -64,7 +64,7 @@ ClusterParams:
   Helium3:
     NBody: 3
     Loop: 1
-    MixEvents: 250
+    MixEvents: 200
     Precision: 25
     From: [ 2212, 2212, 2112 ]
     MassArray:

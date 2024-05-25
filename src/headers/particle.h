@@ -2,6 +2,7 @@
 // Created by mafu on 1/15/2024.
 //
 #pragma once
+// #define EIGEN_USE_MKL_ALL
 #include <vector>
 #include <Eigen/Dense>
 #define M_PI 3.14159265358979323846

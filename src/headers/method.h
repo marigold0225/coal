@@ -3,6 +3,9 @@
 //
 
 #pragma once
+// #define EIGEN_USE_MKL_ALL
+// #define EIGEN_VECTORIZE_SSE4_2
+
 #include "config.h"
 #include "fileloader.h"
 #include "flow.h"
