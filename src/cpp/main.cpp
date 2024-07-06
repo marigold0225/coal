@@ -24,6 +24,7 @@ int main(const int argc, char *argv[]) {
 
     const auto loggerPath = config.outputPath + "/logfile.log";
 
+
     Coal::Logger::getInstance().init(loggerPath);
 
     const auto logger = Coal::Logger::getInstance().get();

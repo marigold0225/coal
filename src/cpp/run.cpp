@@ -21,7 +21,8 @@ void Coal::processReaction(
 
     const auto clusterDir = constructFilename(config.outputPath, reactionName, Suffix);
 
-    const auto ptDir = constructFilename(config.outputPath, reactionName + "_flow", Suffix);
+    const auto ptDir =
+            constructFilename(config.outputPath, reactionName + "_flow", Suffix);
 
     std::optional<unsigned int> max_threads;
 
@@ -73,7 +74,7 @@ void Coal::handleReactions(const EventsMap &allEvents, const ConfigParser &confi
         const auto outputDir = constructFilename(config.outputPath, particleName, suffix);
         const auto outputFlowDir = constructFilename(config.outputPath, flowName, suffix);
         logger->info("Calculating {} for {}...", particleName, suffix);
-        auto result = calculateFlow(events, pdg, rapidityArray, {0.3, 20}, resulution);
+        auto result = calculateFlow(events, pdg, rapidityArray, {0.3, 30}, resulution);
         const outputInterface outputData("pt");
         outputData.output(result, outputFlowDir, resulution);
         // const outputInterface outputParticle("particle");
@@ -85,7 +86,8 @@ void Coal::handleReactions(const EventsMap &allEvents, const ConfigParser &confi
                                                         std::to_string(centrality.second)
                                               : "0-100";
         calculateParticleProperties(events, "proton_flow", "proton", 2212, suffix);
-        // calculateParticleProperties(events, "anti_proton_flow", "antiproton", -2212, suffix);
+        calculateParticleProperties(events, "anti_proton_flow", "antiproton", -2212,
+                                    suffix);
         // calculateParticleProperties(events, "K_flow", "K", 321, suffix);
         // calculateParticleProperties(events, "anti_K_flow", "antiK", -321, suffix);
         // calculateParticleProperties(events, "Pi_flow", "Pi", 211, suffix);

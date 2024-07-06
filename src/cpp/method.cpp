@@ -53,14 +53,14 @@ void Coal::lorenzBoostMatrix(Eigen::Matrix<double, Eigen::Dynamic, 11> &particle
                              const double beta_x, const double beta_y,
                              const double beta_z) {
     double beta2                = beta_x * beta_x + beta_y * beta_y + beta_z * beta_z;
-    const double gamma          = 1.0 / sqrt(1.0 - beta2);
-    const double _gamma_1_beta2 = (gamma - 1) / beta2;
     if (beta2 == 0 || beta2 < 1e-6) {
         return;
     }
     if (beta2 > 0.999999999) {
         beta2 = 0.999999999;
     }
+    const double gamma          = 1.0 / sqrt(1.0 - beta2);
+    const double _gamma_1_beta2 = (gamma - 1) / beta2;
     Eigen::Matrix4d lambda;
     lambda << gamma, -gamma * beta_x, -gamma * beta_y, -gamma * beta_z, -gamma * beta_x,
             1 + _gamma_1_beta2 * beta_x * beta_x, _gamma_1_beta2 * beta_x * beta_y,
@@ -315,7 +315,7 @@ Coal::EventsMap Coal::selectEvents(const EventsMap &eventMap, const ClusterParam
 
         int selectSize  = params.mixEvents * params.NBody;
         auto &generator = RandomNumber::getInstance().getGenerator();
-        // std::ranges::shuffle(eventIDList, generator);
+        std::ranges::shuffle(eventIDList, generator);
         selectSize = std::min(selectSize, static_cast<int>(eventIDList.size()));
         for (int i = 0; i < selectSize; ++i) {
             auto eventID          = eventIDList[i];
@@ -380,7 +380,7 @@ std::vector<Eigen::MatrixXd> Coal::selectParticles(const EventsMap &eventMap,
         std::vector<int> eventIDList;
         std::ranges::transform(eventMap, std::back_inserter(eventIDList),
                                [](const auto &pair) { return pair.first; });
-        // std::ranges::shuffle(eventIDList, generator);
+        std::ranges::shuffle(eventIDList, generator);
         ParticleArray particlesForThisPDG{};
         Eigen::MatrixXd matrix(0, 11);
         for (size_t i = 0; i < PDGs.size(); ++i) {
@@ -409,7 +409,7 @@ std::vector<Eigen::MatrixXd> Coal::selectParticles(const EventsMap &eventMap,
                 }
                 ++count;
             }
-            // std::ranges::shuffle(particlesForThisPDG, generator);
+            std::ranges::shuffle(particlesForThisPDG, generator);
             matrix.resize(static_cast<long>(particlesForThisPDG.size()), 11);
             for (long j = 0; j < particlesForThisPDG.size(); ++j) {
                 const auto &p = particlesForThisPDG[j];

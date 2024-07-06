@@ -138,9 +138,10 @@ Coal::ResParams Coal::getResolution(const ParticleEventMap &OneEvent, const int 
         for (const auto &particle: particles) {
             const double pseudoRapidity = particle.getPseudoRapidity();
             // const double rapidity       = particle.getRapidity();
-            const double pT  = particle.getPT();
+            const double pT = particle.getPT();
             // const double Phi = particle.getPhi();
             const double Phi = Psi(particle.py, particle.px);
+            //AuAu--3GeV--star
             // if (pseudoRapidity > 2.81 && pseudoRapidity < 5.39) {
             //     Q_x += pT * std::cos(Phi);
             //     Q_y += pT * std::sin(Phi);
@@ -157,37 +158,40 @@ Coal::ResParams Coal::getResolution(const ParticleEventMap &OneEvent, const int 
             //     Q_x_C += pT * std::cos(Phi);
             //     Q_y_C += pT * std::sin(Phi);
             // }
-            if (pseudoRapidity > -0.8 && pseudoRapidity < 0.8 && pT > 0.2 && pT < 20) {
-                Q_x += pT * std::cos(2 * Phi);
-                Q_y += pT * std::sin(2 * Phi);
+            //PbPb--5.02TeV--Alice
+            // if (pseudoRapidity > -0.8 && pseudoRapidity < 0.8 && pT > 0.2 && pT < 20) {
+            if (pseudoRapidity > -3.7 && pseudoRapidity < -1.7 ||
+                pseudoRapidity > 2.8 && pseudoRapidity < 5.1) {
+                Q_x += pT * std::cos(N * Phi);
+                Q_y += pT * std::sin(N * Phi);
             }
             if (pseudoRapidity > -3.7 && pseudoRapidity < -1.7 ||
                 pseudoRapidity > 2.8 && pseudoRapidity < 5.1) {
-                Q_x_A += pT * std::cos(2 * Phi);
-                Q_y_A += pT * std::sin(2 * Phi);
+                Q_x_A += pT * std::cos(N * Phi);
+                Q_y_A += pT * std::sin(N * Phi);
             }
             if (pseudoRapidity < 0.8 && pseudoRapidity > 0.0 && pT > 0.2 && pT < 20) {
-                Q_x_B += pT * std::cos(2 * Phi);
-                Q_y_B += pT * std::sin(2 * Phi);
+                Q_x_B += pT * std::cos(N * Phi);
+                Q_y_B += pT * std::sin(N * Phi);
             }
             if (pseudoRapidity > -0.8 && pseudoRapidity < 0.0 && pT > 0.2 && pT < 20) {
-                Q_x_C += pT * std::cos(2 * Phi);
-                Q_y_C += pT * std::sin(2 * Phi);
+                Q_x_C += pT * std::cos(N * Phi);
+                Q_y_C += pT * std::sin(N * Phi);
             }
         }
     }
     params.Q_x           = Q_x;
     params.Q_y           = Q_y;
-    params.Psi_1         = Psi(Q_y, Q_x);
+    params.Psi_1         = Psi(Q_y, Q_x) / N;
     params.Q_x_A         = Q_x_A;
     params.Q_y_A         = Q_y_A;
     params.Q_x_B         = Q_x_B;
     params.Q_y_B         = Q_y_B;
     params.Q_x_C         = Q_x_C;
     params.Q_y_C         = Q_y_C;
-    const double Phi_1   = Psi(Q_y_A, Q_x_A);
-    const double Phi_CD  = Psi(Q_y_B, Q_x_B);
-    const double Phi_TPC = Psi(Q_y_C, Q_x_C);
+    const double Phi_1   = Psi(Q_y_A, Q_x_A) / N;
+    const double Phi_CD  = Psi(Q_y_B, Q_x_B) / N;
+    const double Phi_TPC = Psi(Q_y_C, Q_x_C) / N;
 
     params.cos_N_AB = std::cos(N * (Phi_1 - Phi_CD));
     params.cos_N_AC = std::cos(N * (Phi_1 - Phi_TPC));
@@ -209,11 +213,11 @@ Coal::ResParamsMap Coal::getResolutionMap(const EventsMap &allEvents, const int 
     }
     // ResParamsMap.Ref_v1  = std::sqrt(cos_N_AB * cos_N_AC / cos_N_BC / total_events);
     // ResParamsMap.Ref_v2 = std::sqrt(cos_N_AB * cos_N_AC / cos_N_BC / total_events);
-    ResParamsMap.Ref_v1 = 0.0;
+    ResParamsMap.Ref_v1 = 1.0;
     if (cos_N_AB * cos_N_AC / cos_N_BC > 0) {
         ResParamsMap.Ref_v2 = std::sqrt(cos_N_AB * cos_N_AC / cos_N_BC / total_events);
     } else {
-        ResParamsMap.Ref_v2 = 0.0;
+        ResParamsMap.Ref_v2 = 1.0;
     }
     std::cout << "toal_events:" << total_events << ", "
               << "cos_N_AB:" << cos_N_AB << ", "
@@ -288,11 +292,11 @@ Coal::flowResult Coal::calculateFlow(const EventsMap &allEvents, const int pdg,
         for (const auto &[particleType, particles]: OneEvent) {
             if (particleType == pdg) {
                 for (const auto &particle: particles) {
-                    const double rapidity = particle.getRapidity();
-                    // const double rapidity = particle.getPseudoRapidity();
-                    const double pT  = particle.getPT();
+                    // const double rapidity = particle.getRapidity();
+                    const double rapidity = particle.getPseudoRapidity();
+                    const double pT       = particle.getPT();
                     // const double Phi = particle.getPhi();
-                    const double Phi = Psi(particle.py,particle.px);
+                    const double Phi = Psi(particle.py, particle.px);
                     // constexpr double Psi  = 0.0;
                     const double Psi = resolution.eventPlaneMap.at(eventId);
 

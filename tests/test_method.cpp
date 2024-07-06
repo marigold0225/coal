@@ -32,7 +32,7 @@ protected:
 
         Coal::RandomNumber::getInstance().seed(123456);
         allEvents = Coal::FileLoader::readFile(filename, "smash");
-        auto resolution = Coal::getResolutionMap(allEvents, 1);
+        auto resolution = Coal::getResolutionMap(allEvents);
 
         Cell    = selectEvents(allEvents, cluster, resolution, 1, TODO);
         subCell = selectParticles(Cell, cluster);
