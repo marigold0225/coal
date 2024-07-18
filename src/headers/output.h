@@ -72,22 +72,52 @@ namespace Coal {
             output.close();
         }
 
-        void output(flowResult &result, const std::string &outputFileName,
-                    const ResParamsMap &resolution) const {
-            if (!is_pt_output && !is_flow_output) {
+        // void output(flowResult &result, const std::string &outputFileName,
+        //             const ResParamsMap &resolution) const {
+        //     if (!is_pt_output) {
+        //         return;
+        //     }
+        //
+        //     std::ofstream output(outputFileName);
+        //     if (!output.is_open()) {
+        //         std::cerr << "Error: unable to open file " << outputFileName << std::endl;
+        //         return;
+        //     }
+        //
+        //     for (const auto &key: result.yeildArray | std::views::keys) {
+        //         const auto &rap = key;
+        //         outputRapidityData(output, result, rap, resolution);
+        //     }
+        //
+        //     output.close();
+        // }
+        void output(flowResult_vec &result, const std::string &outputFileName,
+                    const std::vector<std::string> &FlowName,
+                    const ResParamsMap_vec &resolution) const {
+
+            if (!is_flow_output) {
+
                 return;
             }
+
 
             std::ofstream output(outputFileName);
+
             if (!output.is_open()) {
+
                 std::cerr << "Error: unable to open file " << outputFileName << std::endl;
+
                 return;
             }
 
+
             for (const auto &key: result.yeildArray | std::views::keys) {
+
                 const auto &rap = key;
-                outputRapidityData(output, result, rap, resolution);
+
+                outputRapidityData(output, result, rap, FlowName, resolution);
             }
+
 
             output.close();
         }
@@ -98,33 +128,55 @@ namespace Coal {
         const bool is_particle_output;
         const bool is_cluster_output;
 
-        void outputRapidityData(std::ofstream &output, flowResult &result,
+        void outputRapidityData(std::ofstream &output, flowResult_vec &result,
                                 const RapidityRange &rap,
-                                const ResParamsMap &resolution) const {
+                                const std::vector<std::string> &FlowName,
+                                const ResParamsMap_vec &resolution) const {
             output << "Rapidity range: " << rap.first << "<y<" << rap.second
                    << ", cluster yield:"
                    << result.yeildArray[rap] / (rap.second - rap.first) << "\n";
 
             if (is_flow_output) {
-                outputFlowData(output, result, rap, resolution);
-            }
-
-            if (is_pt_output) {
-                outputPTData(output, result, rap, resolution);
+                outputFlowData(output, result, rap, FlowName, resolution);
             }
 
             output << "\n";
         }
 
-        static void outputFlowData(std::ofstream &output, flowResult &result,
+        static void outputFlowData(std::ofstream &output, flowResult_vec &result,
                                    const RapidityRange &rap,
-                                   const ResParamsMap &resolution) {
-            output << "flow over pt range: " << result.ptRange.first << "<pt<"
-                   << result.ptRange.second << ", v1:"
-                   << result.v1overpt[rap] / result.v1overptCount[rap] / resolution.Ref_v1
-                   << ", v2:"
-                   << result.v2overpt[rap] / result.v2overptCount[rap] / resolution.Ref_v2
-                   << "\n";
+                                   const std::vector<std::string> &FlowName,
+                                   const ResParamsMap_vec &resolution) {
+            for (const auto &name: FlowName) {
+                output << "flow over pt range: " << result.ptRange.first << "<pt<"
+                       << result.ptRange.second << " " << name << ":"
+                       << result.flowOverPt[name][rap] /
+                                  result.flowOverPtCount[name][rap] /
+                                  resolution.Ref_vn.at(name )
+                       << "\n";
+            }
+            for (int i = 0; i < result.ptBins.second; ++i) {
+                const double pt = result.ptBins.first / 2 + i * result.ptBins.first;
+                result.ptArray[rap][i] /= (2 * M_PI * pt * result.ptBins.first *
+                                           std::abs(rap.second - rap.first));
+                for (const auto &name: FlowName) {
+
+                    result.flowArray[name][rap][i] =
+                            (result.flowCount[name][rap][i] > 0 &&
+                             resolution.Ref_vn.at(name) != 0.0)
+                                    ? result.flowArray[name][rap][i] /
+                                              result.flowCount[name][rap][i] /
+                                              resolution.Ref_vn.at(name)
+                                    : 0.0;
+                    // output << pt << " " << result.flowArray[name][rap][i] << "\n";
+                }
+                output << pt << " " << result.ptArray[rap][i] << " ";
+                for (const auto &name: FlowName) {
+                    output << result.flowArray[name][rap][i] << " ";
+                }
+                output << "\n";
+            }
+
         }
 
         static void outputPTData(std::ofstream &output, flowResult &result,
@@ -140,18 +192,18 @@ namespace Coal {
                 const double pt = result.ptBins.first / 2 + i * result.ptBins.first;
                 // result.ptArray[rap][i] /= (2 * M_PI * pt * result.ptBins.first *
                 //                            std::abs(rap.second - rap.first));
-                result.ptArray[rap][i] /= ( result.ptBins.first *
-                                           std::abs(rap.second - rap.first));
-                result.v1Array[rap][i] = (result.v1Count[rap][i] > 0 && resolution.Ref_v1 != 0.0)
-                                                 ? result.v1Array[rap][i] /
-                                                           result.v1Count[rap][i] /
-                                                           resolution.Ref_v1
-                                                 : 0.0;
-                result.v2Array[rap][i] = (result.v2Count[rap][i] > 0 && resolution.Ref_v2 != 0.0)
-                                                 ? result.v2Array[rap][i] /
-                                                           result.v2Count[rap][i] /
-                                                           resolution.Ref_v2
-                                                 : 0.0;
+                result.ptArray[rap][i] /=
+                        (result.ptBins.first * std::abs(rap.second - rap.first));
+                result.v1Array[rap][i] =
+                        (result.v1Count[rap][i] > 0 && resolution.Ref_v1 != 0.0)
+                                ? result.v1Array[rap][i] / result.v1Count[rap][i] /
+                                          resolution.Ref_v1
+                                : 0.0;
+                result.v2Array[rap][i] =
+                        (result.v2Count[rap][i] > 0 && resolution.Ref_v2 != 0.0)
+                                ? result.v2Array[rap][i] / result.v2Count[rap][i] /
+                                          resolution.Ref_v2
+                                : 0.0;
 
                 output << pt << " " << result.ptArray[rap][i] << " "
                        << result.v1Array[rap][i] << " " << result.v2Array[rap][i] << "\n";

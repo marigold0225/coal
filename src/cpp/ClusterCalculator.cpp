@@ -12,9 +12,10 @@
 
 std::mutex Coal::ClusterCalculator::mtx;
 
-Eigen::MatrixXd Coal::ClusterCalculator::Coalescence(
-        const EventsMap &allEvents, const ClusterParams &params, ResParamsMap &resolution,
-        std::optional<unsigned int> max_threads) {
+Eigen::MatrixXd
+Coal::ClusterCalculator::Coalescence(const EventsMap &allEvents,
+                                     const ClusterParams &params,
+                                     std::optional<unsigned int> max_threads) {
     if (!max_threads.has_value()) {
         max_threads = 1;
     } else if (*max_threads > 0) {
@@ -23,7 +24,7 @@ Eigen::MatrixXd Coal::ClusterCalculator::Coalescence(
         logger->info("max threads: {}", *max_threads);
     }
     // return processEventstest(allEvents, params, resolution, *max_threads);
-    return processEventsV2(allEvents, params, *max_threads, resolution);
+    return processEventsV2(allEvents, params, *max_threads);
 }
 
 Coal::ClusterCalculator::MatrixMemPool::MatrixMemPool(double *memPool,
@@ -133,8 +134,7 @@ void Coal::ClusterCalculator::processSubCellTest(
 }
 Eigen::MatrixXd Coal::ClusterCalculator::processEventsV2(const EventsMap &allEvents,
                                                          const ClusterParams &params,
-                                                         const unsigned int num_threads,
-                                                         ResParamsMap &resolution) {
+                                                         const unsigned int num_threads) {
     Eigen::Matrix<double, Eigen::Dynamic, 11> targetParticles(100000, 11);
     std::vector<int> eventIDList;
     std::ranges::transform(allEvents, std::back_inserter(eventIDList),
@@ -145,19 +145,12 @@ Eigen::MatrixXd Coal::ClusterCalculator::processEventsV2(const EventsMap &allEve
     const auto start_time = SystemClock::now();
 
     for (auto i = 0; i < params.Loop; ++i) {
-        auto Cell    = selectEvents(allEvents, params,resolution,i,eventIDList);
+        auto Cell    = selectEvents_v2(allEvents, params, eventIDList);
         auto subCell = selectParticles(Cell, params);
         if (subCell.empty()) {
             continue;
         }
         const auto result = mainLoopV1(subCell, params, num_threads);
-        // if (const long newRequiredSize = current_row + result.rows();
-        //     newRequiredSize > targetParticles.rows()) {
-        //     constexpr long resize_size = 100000;
-        //     targetParticles.conservativeResize(newRequiredSize + resize_size, 11);
-        // }
-        // targetParticles.block(current_row, 0, result.rows(), 11) = result;
-        // current_row += result.rows();
         appendMatrixToBottom(result, targetParticles, current_row);
         logger->info("loop: {} size: {}", i, result.rows());
     }
@@ -425,7 +418,8 @@ void Coal::ClusterCalculator::mainLoopV2(const std::vector<Eigen::MatrixXd> &MAr
             setMatrix(tempMatrixs, particles.topRows(N - 1), MArray[N - 1], params.pdg);
             vectorizationWithLastArray(params, tempMatrixs, lorentzMatrixs);
             yieldAll += tempMatrixs.targetParticles.col(10).sum();
-            conditionSelect(tempMatrixs.targetParticles, params.probabilityCut, matrixSwap);
+            conditionSelect(tempMatrixs.targetParticles, params.probabilityCut,
+                            matrixSwap);
             // select(tempMatrixs.targetParticles, 10, params.probabilityCut, matrixSwap);
             appendMatrixToBottom(matrixSwap, threadOutputs, usedRows);
             multiIndex = jumpValidLoop(multiIndex, counts, N - 3);

@@ -12,7 +12,6 @@ namespace Coal {
     public:
         static Eigen::MatrixXd
         Coalescence(const EventsMap &allEvents, const ClusterParams &params,
-                    ResParamsMap &resolution,
                     std::optional<unsigned int> max_threads = std::nullopt);
 
     private:
@@ -53,8 +52,7 @@ namespace Coal {
 
         static Eigen::MatrixXd processEventsV2(const EventsMap &allEvents,
                                                const ClusterParams &params,
-                                               unsigned int num_threads,
-                                               ResParamsMap &resolution);
+                                               unsigned int num_threads);
 
         static std::pair<int, int> getjobRange(int total_size, int num_threads,
                                                int thread_id);

@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 3.27)
 project(coal)
 
 set(CMAKE_CXX_STANDARD 20)
-##
+# #
 
 if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
+        set(CMAKE_BUILD_TYPE Release)
 endif ()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -fno-math-errno -march=native -ftree-vectorize -mavx -mfma")
@@ -62,25 +62,25 @@ target_link_libraries(${PROJECT_NAME} coal_lib)
 
 # spdlog
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/spdlog")
-#    add_subdirectory(3rdparty/spdlog)
-    include_directories(3rdparty/spdlog/include)
+        #    add_subdirectory(3rdparty/spdlog)
+        include_directories(3rdparty/spdlog/include)
 else()
-    message(FATAL_ERROR "spdlog directory not found in 3rdparty. Please download spdlog and extract it to ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/spdlog")
+        message(FATAL_ERROR "spdlog directory not found in 3rdparty. Please download spdlog and extract it to ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/spdlog")
 endif()
 
 # YAML
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/yaml-cpp")
-    add_subdirectory(3rdparty/yaml-cpp)
-    target_link_libraries(coal_lib yaml-cpp)
+        add_subdirectory(3rdparty/yaml-cpp)
+        target_link_libraries(coal_lib yaml-cpp)
 else ()
-    message(FATAL_ERROR "yaml-cpp directory not found in 3rdparty. Please download yaml-cpp from https://github.com/jbeder/yaml-cpp and extract it to ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/yaml-cpp")
+        message(FATAL_ERROR "yaml-cpp directory not found in 3rdparty. Please download yaml-cpp from https://github.com/jbeder/yaml-cpp and extract it to ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/yaml-cpp")
 endif ()
 
 # Eigen
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/eigen-3.4.0")
-    include_directories(3rdparty/eigen-3.4.0)
+        include_directories(3rdparty/eigen-3.4.0)
 else ()
-    message(FATAL_ERROR "Eigen directory not found in 3rdparty. Please download Eigen from https://gitlab.com/libeigen/eigen/-/releases/3.4.0 and extract it to ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/eigen-3.4.0")
+        message(FATAL_ERROR "Eigen directory not found in 3rdparty. Please download Eigen from https://gitlab.com/libeigen/eigen/-/releases/3.4.0 and extract it to ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/eigen-3.4.0")
 endif ()
 
 
@@ -95,27 +95,24 @@ endif ()
 # Google Test
 option(PACKAGE_TESTS "Build the tests" OFF)
 if (PACKAGE_TESTS AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/googletest")
-    add_subdirectory(googletest)
-    include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
-    add_subdirectory(tests)
+        add_subdirectory(googletest)
+        include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+        add_subdirectory(tests)
 else ()
-    message("Google Test directory not found, skipping tests")
+        message("Google Test directory not found, skipping tests")
 endif ()
 
 # benchmark
 OPTION(BUILD_BENCHMARK "Builds the benchmark subproject" OFF)
 if (BUILD_BENCHMARK)
-    find_package(benchmark)
-    if (benchmark_FOUND)
-        message("BENCHMARK FOUND")
-        add_subdirectory(benchmark)
-    else ()
-        message("Benchmark library not found, skipping benchmarks")
-    endif ()
+        find_package(benchmark)
+        if (benchmark_FOUND)
+                message("BENCHMARK FOUND")
+                add_subdirectory(benchmark)
+        else ()
+                message("Benchmark library not found, skipping benchmarks")
+        endif ()
 endif ()
-
-
-
 
 
 
